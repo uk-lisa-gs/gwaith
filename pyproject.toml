@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gwaith"
+version = "0.1.0"
+description = "A lightweight workflow manager for gravitational-wave analysis pipelines."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "uk-lisa-gs" }]
+dependencies = [
+  "PyYAML>=6.0",
+  "numpy>=1.21",
+  "scipy>=1.7",
+  "h5py>=3.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.0",
+  "ruff>=0.4",
+  "mypy>=1.9",
+]
+
+[project.scripts]
+gwaith_subtract_signals = "gwaith.tools.subtraction.subtract_signals:main"
+gwaith_estimate_psd = "gwaith.tools.examples.estimate_psd:main"
+gwaith_fit_sine = "gwaith.tools.examples.fit_sine:main"
+gwaith_fit_offset = "gwaith.tools.examples.fit_offset:main"
+gwaith_build_workflow = "gwaith.tools.workflow.build_workflow:main"
+gwaith_consolidate_params = "gwaith.tools.workflow.consolidate_params:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

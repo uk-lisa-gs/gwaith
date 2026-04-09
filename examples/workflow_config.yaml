@@ -1,0 +1,21 @@
+workflow:
+  name: demo_workflow
+  rounds: 3
+  output_dir: examples/workflow
+
+input:
+  data_file: examples/out/example_data.h5
+  data_dataset: data
+
+executables:
+  estimate_psd: gwaith_estimate_psd
+
+modules:
+  - name: offset
+    executable: gwaith_fit_offset
+    priors: examples/offset_priors.yaml
+    signal_dataset: signal
+  - name: sine
+    executable: gwaith_fit_sine
+    priors: examples/sine_priors.yaml
+    signal_dataset: signal
