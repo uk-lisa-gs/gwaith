@@ -16,8 +16,12 @@ import numpy as np
 from scipy import signal
 
 from gwaith import add_gwaith_common_options, init_logging
-from gwaith.io import add_data_input_args, add_data_output_args
-from gwaith.file_interface import hfile
+from gwaith.io import (
+    add_data_input_args,
+    add_data_output_args,
+    load_timeseries,
+    write_frequencyseries,
+)
 from gwaith.types import FrequencySeries
 
 logger = logging.getLogger("gwaith.estimate_psd")
@@ -25,7 +29,7 @@ logger = logging.getLogger("gwaith.estimate_psd")
 
 def load_data(filepath: str, dataset_name: str = "data") -> np.ndarray:
     """Backward-compatible loader returning raw ndarray samples."""
-    return hfile.load_timeseries(filepath, dataset_name).data
+    return load_timeseries(filepath, dataset_name).data
 
 
 def estimate_psd(
@@ -90,7 +94,7 @@ def main(argv: list[str] | None = None) -> int:
 
     try:
         logger.info("Loading data from %s [%s]", args.data, args.data_dataset)
-        data_ts = hfile.load_timeseries(args.data, args.data_dataset)
+        data_ts = load_timeseries(args.data, args.data_dataset)
         logger.info(
             "Loaded %d samples (epoch=%.3f, delta_t=%.6g)",
             len(data_ts.data), data_ts.epoch, data_ts.delta_t,
@@ -109,7 +113,7 @@ def main(argv: list[str] | None = None) -> int:
 
         if args.output:
             logger.info("Writing PSD to %s [%s]", args.output, args.output_dataset)
-            hfile.write_frequencyseries(
+            write_frequencyseries(
                 freq_series, args.output, args.output_dataset,
                 fs=fs,
                 nperseg=args.nperseg if args.nperseg else "auto",

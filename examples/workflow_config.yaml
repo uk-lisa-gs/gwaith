@@ -1,7 +1,7 @@
 workflow:
   name: demo_workflow
   rounds: 3
-  output_dir: examples/workflow
+  output_dir: examples/workflow_out
 
 input:
   data_file: examples/out/example_data.h5

@@ -96,12 +96,12 @@ def load_timeseries(filepath: str, dataset_name: str = "data"):
         raise ValueError(f"Unknown format: {fmt}")
 
 
-def write_frequencyseries(fs, filepath: str, dataset_name: str = "psd", **attrs) -> None:
+def write_frequencyseries(series, filepath: str, dataset_name: str = "psd", **attrs) -> None:
     """Write a FrequencySeries to file, auto-detecting format from extension.
 
     Parameters
     ----------
-    fs:
+    series:
         FrequencySeries object to save.
     filepath:
         Path to output file.
@@ -112,7 +112,7 @@ def write_frequencyseries(fs, filepath: str, dataset_name: str = "psd", **attrs)
     """
     fmt = get_format_from_filename(filepath)
     if fmt == "hdf5":
-        write_frequencyseries_hdf5(fs, filepath, dataset_name, **attrs)
+        write_frequencyseries_hdf5(series, filepath, dataset_name, **attrs)
     else:
         raise ValueError(f"Unknown format: {fmt}")
 

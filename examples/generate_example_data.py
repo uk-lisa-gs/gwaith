@@ -21,10 +21,10 @@ import numpy as np
 import yaml
 from normalise_config import normalise_example_generation_config
 
-from gwaith.file_interface import hfile
 from gwaith.config import (
     load_config,
 )
+from gwaith.io import write_timeseries
 from gwaith.types import TimeSeries
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -268,7 +268,7 @@ def main(argv: list[str] | None = None) -> int:
 
     data_dataset = output_cfg["data_dataset"]
 
-    hfile.write_timeseries(
+    write_timeseries(
         ts=TimeSeries(data=data, epoch=epoch, delta_t=delta_t),
         filepath=str(data_file),
         dataset_name=data_dataset,

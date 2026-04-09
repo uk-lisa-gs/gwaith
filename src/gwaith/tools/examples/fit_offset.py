@@ -13,8 +13,7 @@ import logging
 from pathlib import Path
 
 from gwaith import add_gwaith_common_options, init_logging
-from gwaith.io import add_data_input_args, add_data_output_args
-from gwaith.file_interface import hfile
+from gwaith.io import add_data_input_args, add_data_output_args, load_timeseries, write_timeseries
 from gwaith.types import TimeSeries
 from gwaith.tools.examples.common import apply_bounds, get_param_prior, load_prior_file
 
@@ -59,14 +58,14 @@ def main(argv: list[str] | None = None) -> int:
     init_logging(args.verbose)
 
     try:
-        data_ts = hfile.load_timeseries(args.data, args.data_dataset)
+        data_ts = load_timeseries(args.data, args.data_dataset)
 
         prior_path = args.priors or args.init_params
         priors = load_prior_file(prior_path) if prior_path else {}
         offset = fit_offset(data_ts, priors)
 
         signal_ts = offset_model(data_ts, offset)
-        hfile.write_timeseries(signal_ts, args.output_signal, args.output_signal_dataset)
+        write_timeseries(signal_ts, args.output_signal, args.output_signal_dataset)
 
         # Emit exactly one scalar value as requested.
         Path(args.output_params).write_text(f"{offset}\n", encoding="utf-8")
