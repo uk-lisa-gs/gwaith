@@ -1,0 +1,6 @@
+processor:
+  options:
+    input-file: examples/example_data/example_data.h5
+    input-dataset: data
+
+subtraction:

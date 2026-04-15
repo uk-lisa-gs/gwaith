@@ -1,7 +1,5 @@
 """Configuration normalisation helpers for GWAITH."""
 
-from __future__ import annotations
-
 from typing import Any
 
 

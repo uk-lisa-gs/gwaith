@@ -12,7 +12,6 @@ __version__ = "0.1.0"
 _LOG_FORMAT = "%(levelname)s:%(asctime)s:%(name)s:%(message)s"
 _LOG_DATEFMT = "%Y-%m-%dT%H:%M:%S%z"
 
-
 def _resolve_version() -> str:
     try:
         return version("gwaith")
@@ -42,6 +41,9 @@ def add_gwaith_common_options(
     )
     return parser
 
+
+_LOG_FORMAT = "%(levelname)s: %(asctime)s: %(name)s: %(message)s"
+_LOG_DATEFMT = "%Y-%m-%dT%H:%M:%S%z"
 
 def init_logging(verbosity: int = 0) -> int:
     """Initialize unified logging format and return selected level."""

@@ -1,29 +1,37 @@
 """Configuration I/O for GWAITH with format auto-detection."""
-
-from __future__ import annotations
-
 from pathlib import Path
 from typing import Any
 
-from .normalise import (
-    normalise_config,
-    normalise_workflow_config,
-)
-from .yaml_config import (
-    load_yaml_config as _load_config_yaml,
-    write_yaml_config as _write_config_yaml,
-)
+from .yaml_config import load_yaml_data
+from .types import GwaithConfig
+from .parser import GwaithConfigParser
+from .utils import safe_update, get_dict_value, resolve_match
+
+
+def add_config_input_options(parser):
+    parser.add_argument(
+        '--config-files',
+        required=True,
+        nargs='+',
+        help='Configuration files to control the workflow'
+    )
 
 __all__ = [
-    "load_config",
-    "write_config",
-    "normalise_config",
-    "normalise_workflow_config",
+    "add_config_input_options",
+    "load_yaml_data",
+    "GwaithConfig",
+    "GwaithConfigParser",
+    "safe_update",
+    "get_dict_value",
+    "resolve_match"
 ]
 
 
 def load_config(filepath: str | Path) -> dict[str, Any]:
     """Load a configuration file, auto-detecting format from extension.
+
+    For YAML/INI files, interpolation tokens in string values are resolved
+    using :class:`GwaithConfigParser`.
 
     Parameters
     ----------
@@ -42,7 +50,7 @@ def load_config(filepath: str | Path) -> dict[str, Any]:
     """
     suffix = Path(filepath).suffix.lower()
     if suffix in (".yaml", ".yml"):
-        return _load_config_yaml(filepath)
+        return GwaithConfigParser.from_file(filepath).as_dict()
     raise ValueError(
         "Unsupported config format: "
         f"{suffix!r}. Supported formats: .yaml, .yml"
