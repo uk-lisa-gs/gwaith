@@ -45,8 +45,9 @@ def add_gwaith_common_options(
 _LOG_FORMAT = "%(levelname)s: %(asctime)s: %(name)s: %(message)s"
 _LOG_DATEFMT = "%Y-%m-%dT%H:%M:%S%z"
 
-def init_logging(verbosity: int = 0) -> int:
+def init_logging(verbosity: int = 0, default_level: int = 0) -> int:
     """Initialize unified logging format and return selected level."""
+    verbosity = verbosity + default_level
     if verbosity <= 0:
         level = logging.WARNING
     elif verbosity == 1:

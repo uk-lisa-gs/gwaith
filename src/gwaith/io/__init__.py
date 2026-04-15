@@ -7,12 +7,20 @@ from .cli import (
     add_data_output_args,
     add_signal_input_args,
     resolve_signal_datasets,
+    MultiOptionAction,
+    KeyValueOptionAction
 )
 from .hdf5 import (
     load_frequencyseries as load_frequencyseries_hdf5,
     load_timeseries as load_timeseries_hdf5,
     write_frequencyseries as write_frequencyseries_hdf5,
     write_timeseries as write_timeseries_hdf5,
+)
+
+
+from .mojito import (
+    write_mojito_orbits,
+    write_mojito_tdis,
 )
 
 __all__ = [
@@ -25,6 +33,10 @@ __all__ = [
     "load_timeseries",
     "write_frequencyseries",
     "load_frequencyseries",
+    'write_mojito_orbits',
+    'write_mojito_tdis',
+    'MultiOptionAction',
+    'KeyValueOptionAction'
 ]
 
 
