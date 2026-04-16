@@ -34,6 +34,17 @@ def add_ingest_data_argument_parser(argv=None):
         help='Output HDF5 file for static orbits-only Mojito file.',
     )
     add_data_processing_args(parser)
+    parser.add_argument(
+        '--chunk-duration',
+        type=float,
+        help='Chunk duration in seconds for processing.',
+    )
+    parser.add_argument(
+        '--chunk-overlap',
+        type=float,
+        default=0,
+        help='Overlap between chunks in seconds.',
+    )
     args = parser.parse_args(argv)
     return (parser, args)
 
@@ -45,6 +56,15 @@ def main(argv=None):
     _, args = add_ingest_data_argument_parser(argv)
     init_logging(args.verbose, default_level=1)
     # Convert the key:value pairs from the processor options 
+
+    if args.chunk_duration:
+        if not hasattr(args, 'tstart') or not hasattr(args, 'duration'):
+            logger.error('Chunking requires --tstart and --duration to be specified.')
+            return 1
+        args.processor_options['chunk_duration'] = args.chunk_duration
+        args.processor_options['chunk_overlap'] = args.chunk_overlap
+        args.processor_options['tstart'] = args.tstart
+        args.processor_options['duration'] = args.duration
 
     try:
         output_data = process(args.data, args.processor_options, args.processor)

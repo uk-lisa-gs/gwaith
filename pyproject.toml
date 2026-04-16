@@ -32,7 +32,7 @@ gwaith_fit_offset = "tools.examples.fit_offset:main"
 gwaith_fit_sine_gaussian = "tools.examples.fit_sine_gaussian:main"
 gwaith_build_workflow = "tools.workflow.build_workflow:main"
 gwaith_consolidate_params = "tools.workflow.consolidate_params:main"
-gwaith_ingest_data = "gwaith.tools.data.ingest_data:main"
+gwaith_ingest_data = "tools.data.ingest_data:main"
 
 [tool.setuptools]
 package-dir = {"" = "src", "tools" = "tools"}
