@@ -25,18 +25,19 @@ dev = [
 ]
 
 [project.scripts]
-gwaith_subtract_signals = "gwaith.tools.subtraction.subtract_signals:main"
-gwaith_estimate_psd = "gwaith.tools.examples.estimate_psd:main"
-gwaith_fit_sine = "gwaith.tools.examples.fit_sine:main"
-gwaith_fit_offset = "gwaith.tools.examples.fit_offset:main"
-gwaith_build_workflow = "gwaith.tools.workflow.build_workflow:main"
-gwaith_consolidate_params = "gwaith.tools.workflow.consolidate_params:main"
+gwaith_subtract_signals = "tools.subtraction.subtract_signals:main"
+gwaith_estimate_psd = "tools.examples.estimate_psd:main"
+gwaith_fit_sine = "tools.examples.fit_sine:main"
+gwaith_fit_offset = "tools.examples.fit_offset:main"
+gwaith_build_workflow = "tools.workflow.build_workflow:main"
+gwaith_consolidate_params = "tools.workflow.consolidate_params:main"
 
 [tool.setuptools]
-package-dir = {"" = "src"}
+package-dir = {"" = "src", "tools" = "tools"}
 
 [tool.setuptools.packages.find]
-where = ["src"]
+where = ["src", "."]
+include = ["gwaith*", "tools*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
