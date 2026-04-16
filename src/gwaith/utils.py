@@ -8,7 +8,7 @@ from importlib.metadata import PackageNotFoundError, version
 
 __version__ = "0.1.0"
 
-_LOG_FORMAT = "% (levelname)s: %(asctime)s: %(name)s.%(module)s: %(message)s"
+_LOG_FORMAT = "%(levelname)s:%(asctime)s:%(name)s:%(message)s"
 _LOG_DATEFMT = "%Y-%m-%dT%H:%M:%S%z"
 
 def _resolve_version() -> str:
