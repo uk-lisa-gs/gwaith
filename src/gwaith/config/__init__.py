@@ -44,7 +44,8 @@ def load_config(filepath: str | Path) -> dict[str, Any]:
     if suffix in (".yaml", ".yml"):
         return _load_config_yaml(filepath)
     raise ValueError(
-        f"Unsupported config format: {suffix!r}. Supported formats: .yaml, .yml"
+        "Unsupported config format: "
+        f"{suffix!r}. Supported formats: .yaml, .yml"
     )
 
 
@@ -68,5 +69,6 @@ def write_config(filepath: str | Path, config: dict[str, Any]) -> None:
         _write_config_yaml(filepath, config)
         return
     raise ValueError(
-        f"Unsupported config format: {suffix!r}. Supported formats: .yaml, .yml"
+        "Unsupported config format: "
+        f"{suffix!r}. Supported formats: .yaml, .yml"
     )

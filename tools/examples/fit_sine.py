@@ -23,7 +23,11 @@ from gwaith.io import (
     write_timeseries,
 )
 from gwaith.types import TimeSeries
-from gwaith.tools.examples.common import apply_bounds, get_param_prior, load_prior_file
+from gwaith.tools.examples.common import (
+    apply_bounds,
+    get_param_prior,
+    load_prior_file,
+)
 
 logger = logging.getLogger("gwaith.examples.fit_sine")
 
@@ -67,8 +71,13 @@ def _fit_component_at_frequency(
     return amplitude, phase, component
 
 
-def fit_sine_parameters(data_ts: TimeSeries, priors: dict) -> list[dict[str, float]]:
-    """Fit multiple sine components until amplitude falls below prior minimum."""
+def fit_sine_parameters(
+    data_ts: TimeSeries, priors: dict
+) -> list[dict[str, float]]:
+    """Fit multiple sine components.
+
+    The loop stops when amplitude falls below the prior minimum.
+    """
     y = np.asarray(data_ts.data, dtype=float)
     t = np.arange(len(y), dtype=float) * data_ts.delta_t
     residual = y.copy()
@@ -113,7 +122,9 @@ def fit_sine_parameters(data_ts: TimeSeries, priors: dict) -> list[dict[str, flo
         f0: float | None = None
         for idx_local in candidate_indices:
             f_try = float(valid_freqs[int(idx_local)])
-            if all(abs(f_try - f_prev) >= min_sep for f_prev in selected_freqs):
+            if all(
+                abs(f_try - f_prev) >= min_sep for f_prev in selected_freqs
+            ):
                 f0 = f_try
                 break
 
@@ -122,7 +133,9 @@ def fit_sine_parameters(data_ts: TimeSeries, priors: dict) -> list[dict[str, flo
 
         f0 = apply_bounds(f0, freq_prior)
 
-        amplitude, phase, component = _fit_component_at_frequency(residual, t, f0)
+        amplitude, phase, component = _fit_component_at_frequency(
+            residual, t, f0
+        )
         if "value" in amp_prior:
             amplitude = float(amp_prior["value"])
         amplitude = apply_bounds(amplitude, amp_prior)
@@ -149,7 +162,9 @@ def fit_sine_parameters(data_ts: TimeSeries, priors: dict) -> list[dict[str, flo
     return components
 
 
-def sine_model(ts: TimeSeries, components: list[dict[str, float]]) -> TimeSeries:
+def sine_model(
+    ts: TimeSeries, components: list[dict[str, float]]
+) -> TimeSeries:
     t = np.arange(len(ts.data)) * ts.delta_t
     model = np.zeros_like(ts.data, dtype=float)
     for comp in components:
@@ -162,13 +177,22 @@ def sine_model(ts: TimeSeries, components: list[dict[str, float]]) -> TimeSeries
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="gwaith_fit_sine",
-        description="Fit amplitude/frequency/phase and output signal timeseries + parameters.",
+        description=(
+            "Fit amplitude/frequency/phase and output signal timeseries "
+            "+ parameters."
+        ),
     )
     add_data_input_args(parser, data_help="Input HDF5 data file")
     parser.add_argument(
-        "--priors", required=False, help="Optional prior file (.yaml/.yml or .ini)"
+        "--priors",
+        required=False,
+        help="Optional prior file (.yaml/.yml or .ini)",
     )
-    parser.add_argument("--init-params", required=False, help=argparse.SUPPRESS)
+    parser.add_argument(
+        "--init-params",
+        required=False,
+        help=argparse.SUPPRESS,
+    )
     add_data_output_args(
         parser,
         output_option="--output-signal",
@@ -177,7 +201,9 @@ def main(argv: list[str] | None = None) -> int:
         output_help="Output HDF5 signal file",
     )
     parser.add_argument(
-        "--output-params", required=True, help="Output YAML parameters file"
+        "--output-params",
+        required=True,
+        help="Output YAML parameters file",
     )
     add_gwaith_common_options(parser)
     args = parser.parse_args(argv)
@@ -192,7 +218,11 @@ def main(argv: list[str] | None = None) -> int:
         components = fit_sine_parameters(data_ts, priors)
 
         signal_ts = sine_model(data_ts, components)
-        write_timeseries(signal_ts, args.output_signal, args.output_signal_dataset)
+        write_timeseries(
+            signal_ts,
+            args.output_signal,
+            args.output_signal_dataset,
+        )
 
         out = {
             "model": "sine",

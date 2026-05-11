@@ -24,7 +24,9 @@ def normalise_example_generation_config(raw: dict[str, Any]) -> dict[str, Any]:
 
     sine_waves = raw.get("sine_waves", [])
     if not isinstance(sine_waves, list) or len(sine_waves) != 5:
-        raise ValueError("Config must contain exactly five entries in 'sine_waves'.")
+        raise ValueError(
+            "Config must contain exactly five entries in 'sine_waves'."
+        )
 
     normalised_waves: list[dict[str, float]] = []
     for wave in sine_waves:
@@ -44,10 +46,12 @@ def normalise_example_generation_config(raw: dict[str, Any]) -> dict[str, Any]:
 
     # Keep backward compatibility with the old single plot_file option.
     plot_time_file = output.get(
-        "plot_time_file", output.get("plot_file", "example_data_plot_time.png")
+        "plot_time_file",
+        output.get("plot_file", "example_data_plot_time.png"),
     )
     plot_frequency_file = output.get(
-        "plot_frequency_file", "example_data_plot_frequency.png"
+        "plot_frequency_file",
+        "example_data_plot_frequency.png",
     )
 
     return {

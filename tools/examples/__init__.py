@@ -1,5 +1,5 @@
 """Example analysis tools for simple signal models.
 
-The analysis tools given here are intended as bare-bones inputs to be used in a GWAITH workflow,
-and only produce basic input / outputs which can demonstrate the round-robin analysis.
+The tools here are intentionally bare-bones inputs for a GWAITH workflow.
+They produce only basic inputs and outputs for round-robin demonstrations.
 """

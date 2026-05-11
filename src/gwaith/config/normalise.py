@@ -31,14 +31,16 @@ def normalise_config(
             config_type = "workflow"
         else:
             raise ValueError(
-                "Could not infer config type. Provide config_type as 'workflow'."
+                "Could not infer config type. "
+                "Provide config_type as 'workflow'."
             )
 
     if config_type == "workflow":
         return normalise_workflow_config(raw)
 
     raise ValueError(
-        f"Unsupported config_type: {config_type!r}. Supported values: 'workflow'"
+        "Unsupported config_type: "
+        f"{config_type!r}. Supported values: 'workflow'"
     )
 
 
@@ -107,7 +109,9 @@ def normalise_workflow_config(raw: dict[str, Any]) -> dict[str, Any]:
             name = mod.get("name")
             executable = mod.get("executable")
             if not name or not executable:
-                raise ValueError("Each module requires 'name' and 'executable'")
+                raise ValueError(
+                    "Each module requires 'name' and 'executable'"
+                )
             modules.append(
                 {
                     "name": str(name),
@@ -128,18 +132,23 @@ def normalise_workflow_config(raw: dict[str, Any]) -> dict[str, Any]:
         sine_prior = priors.get("sine")
         if not offset_prior or not sine_prior:
             raise ValueError(
-                "Either provide 'modules', or provide priors.offset and priors.sine"
+                "Either provide 'modules', or provide priors.offset "
+                "and priors.sine"
             )
         modules = [
             {
                 "name": "offset",
-                "executable": str(executables.get("fit_offset", "gwaith_fit_offset")),
+                "executable": str(
+                    executables.get("fit_offset", "gwaith_fit_offset")
+                ),
                 "priors": str(offset_prior),
                 "signal_dataset": "signal",
             },
             {
                 "name": "sine",
-                "executable": str(executables.get("fit_sine", "gwaith_fit_sine")),
+                "executable": str(
+                    executables.get("fit_sine", "gwaith_fit_sine")
+                ),
                 "priors": str(sine_prior),
                 "signal_dataset": "signal",
             },
@@ -156,7 +165,9 @@ def normalise_workflow_config(raw: dict[str, Any]) -> dict[str, Any]:
             "data_dataset": str(input_cfg.get("data_dataset", "data")),
         },
         "executables": {
-            "estimate_psd": str(executables.get("estimate_psd", "gwaith_estimate_psd")),
+            "estimate_psd": str(
+                executables.get("estimate_psd", "gwaith_estimate_psd")
+            ),
         },
         "modules": modules,
     }

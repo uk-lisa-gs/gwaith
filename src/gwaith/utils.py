@@ -65,29 +65,15 @@ class _MissingModule:
         outer = inspect.getouterframes(frame, 2)
         func = outer[1][3] if len(outer) > 1 else "<unknown>"
         msg = (
-            f"The function '{func}' tried to access attribute '{attr}' of module '"
-            f"{self._name}', but it is not installed. "
+            f"The function '{func}' tried to access attribute '{attr}' "
+            f"of module '{self._name}', but it is not installed. "
             f"Please install '{self._name}' to enable this functionality."
         )
         raise ImportError(msg)
 
 
 def import_optional(module_name):
-    """
-    Attempt to import a module by name. If the module is not found,
-    return a stub object that raises ImportError with a helpful message
-    when any attribute is accessed.
-
-    Parameters
-    ----------
-    module_name : str
-        The name of the module to import.
-
-    Returns
-    -------
-    module or stub : module or object
-        The imported module, or a stub that raises ImportError on attribute access.
-    """
+    """Import a module or return a stub that raises helpful errors."""
     try:
         return importlib.import_module(module_name)
     except ImportError:

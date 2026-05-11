@@ -33,7 +33,9 @@ class TimeSeries:
         if self.epoch != other.epoch:
             raise ValueError(f"epoch mismatch: {self.epoch} != {other.epoch}")
         if self.delta_t != other.delta_t:
-            raise ValueError(f"delta_t mismatch: {self.delta_t} != {other.delta_t}")
+            raise ValueError(
+                f"delta_t mismatch: {self.delta_t} != {other.delta_t}"
+            )
 
     def __add__(self, other: TimeSeries) -> TimeSeries:
         self._check_compatible(other)
@@ -49,7 +51,11 @@ class TimeSeries:
     def __rsub__(self, other: TimeSeries) -> TimeSeries:
         if isinstance(other, TimeSeries):
             other._check_compatible(self)
-            return TimeSeries(other.data - self.data, self.epoch, self.delta_t)
+            return TimeSeries(
+                other.data - self.data,
+                self.epoch,
+                self.delta_t,
+            )
         return NotImplemented
 
 
@@ -88,14 +94,21 @@ class FrequencySeries:
 
     @property
     def delta_f(self) -> float:
-        """Frequency bin spacing (Hz), derived from the ``frequencies`` array."""
+        """Frequency bin spacing (Hz).
+
+        Derived from the ``frequencies`` array.
+        """
         if len(self.frequencies) < 2:
-            raise ValueError("Cannot compute delta_f: fewer than 2 frequency bins")
+            raise ValueError(
+                "Cannot compute delta_f: fewer than 2 frequency bins"
+            )
         return float(self.frequencies[1] - self.frequencies[0])
 
     def _check_compatible(self, other: FrequencySeries) -> None:
         if self.delta_f != other.delta_f:
-            raise ValueError(f"delta_f mismatch: {self.delta_f} != {other.delta_f}")
+            raise ValueError(
+                f"delta_f mismatch: {self.delta_f} != {other.delta_f}"
+            )
 
     def __mul__(self, other: FrequencySeries) -> FrequencySeries:
         self._check_compatible(other)
@@ -116,6 +129,9 @@ class FrequencySeries:
         if isinstance(other, FrequencySeries):
             other._check_compatible(self)
             return FrequencySeries(
-                other.data / self.data, self.frequencies, self.epoch, self.delta_t
+                other.data / self.data,
+                self.frequencies,
+                self.epoch,
+                self.delta_t,
             )
         return NotImplemented

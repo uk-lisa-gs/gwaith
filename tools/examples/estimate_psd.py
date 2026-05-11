@@ -47,7 +47,8 @@ def estimate_psd(
     fs : float, optional
         Sampling frequency (default 1 Hz).
     nperseg : int, optional
-        Length of each segment. If None, uses 256 or len(data)//8, whichever is smaller.
+        Length of each segment. If None, uses 256 or len(data)//8,
+        whichever is smaller.
     noverlap : int, optional
         Number of points to overlap. If None, uses nperseg // 2.
 
@@ -75,7 +76,10 @@ def main(argv: list[str] | None = None) -> int:
     )
     add_data_input_args(
         parser,
-        data_help="Path to HDF5 data file (e.g. residual from gwaith_subtract_signals)",
+        data_help=(
+            "Path to HDF5 data file (e.g. residual from "
+            "gwaith_subtract_signals)"
+        ),
     )
     add_data_output_args(
         parser,
@@ -87,7 +91,10 @@ def main(argv: list[str] | None = None) -> int:
         "--fs",
         type=float,
         default=None,
-        help="Sampling frequency in Hz; derived from file delta_t if not given",
+        help=(
+            "Sampling frequency in Hz; derived from file delta_t "
+            "if not given"
+        ),
     )
     parser.add_argument(
         "--nperseg", type=int, default=None, help="Segment length for Welch"
@@ -124,7 +131,11 @@ def main(argv: list[str] | None = None) -> int:
         )
 
         if args.output:
-            logger.info("Writing PSD to %s [%s]", args.output, args.output_dataset)
+            logger.info(
+                "Writing PSD to %s [%s]",
+                args.output,
+                args.output_dataset,
+            )
             write_frequencyseries(
                 freq_series,
                 args.output,

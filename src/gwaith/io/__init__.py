@@ -50,7 +50,8 @@ def get_format_from_filename(filepath: str) -> str:
     if suffix in (".h5", ".hdf5", ".hdf"):
         return "hdf5"
     raise ValueError(
-        f"Unsupported file format: {suffix!r}. Supported formats: .h5, .hdf5, .hdf"
+        "Unsupported file format: "
+        f"{suffix!r}. Supported formats: .h5, .hdf5, .hdf"
     )
 
 

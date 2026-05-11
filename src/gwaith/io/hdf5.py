@@ -28,9 +28,13 @@ def load_timeseries(filepath: str, dataset_name: str) -> TimeSeries:
             )
         data = f[dataset_name][:]
         if "epoch" not in f.attrs:
-            raise KeyError(f"File {filepath!r} is missing required attribute 'epoch'")
+            raise KeyError(
+                f"File {filepath!r} is missing required attribute 'epoch'"
+            )
         if "delta_t" not in f.attrs:
-            raise KeyError(f"File {filepath!r} is missing required attribute 'delta_t'")
+            raise KeyError(
+                f"File {filepath!r} is missing required attribute 'delta_t'"
+            )
         epoch = float(f.attrs["epoch"])
         delta_t = float(f.attrs["delta_t"])
     return TimeSeries(data=data, epoch=epoch, delta_t=delta_t)
@@ -49,9 +53,13 @@ def load_frequencyseries(filepath: str, dataset_name: str) -> FrequencySeries:
                 f"File {filepath!r} is missing required dataset 'frequencies'"
             )
         if "epoch" not in f.attrs:
-            raise KeyError(f"File {filepath!r} is missing required attribute 'epoch'")
+            raise KeyError(
+                f"File {filepath!r} is missing required attribute 'epoch'"
+            )
         if "delta_t" not in f.attrs:
-            raise KeyError(f"File {filepath!r} is missing required attribute 'delta_t'")
+            raise KeyError(
+                f"File {filepath!r} is missing required attribute 'delta_t'"
+            )
         data = f[dataset_name][:]
         frequencies = f["frequencies"][:]
         epoch = float(f.attrs["epoch"])

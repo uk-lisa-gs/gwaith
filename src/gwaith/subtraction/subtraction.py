@@ -5,18 +5,22 @@ from __future__ import annotations
 from gwaith.types import TimeSeries
 
 
-def subtract_signals(data_ts: TimeSeries, signals: list[TimeSeries]) -> TimeSeries:
-    """Subtract each signal from *data_ts*, returning a new :class:`TimeSeries`.
+def subtract_signals(
+    data_ts: TimeSeries, signals: list[TimeSeries]
+) -> TimeSeries:
+    """Subtract each signal from *data_ts*.
 
     Raises
     ------
     ValueError
-        If any signal's length, ``epoch``, or ``delta_t`` differs from *data_ts*.
+        If any signal's length, ``epoch``, or ``delta_t`` differs from
+        *data_ts*.
     """
     for i, sig in enumerate(signals):
         if len(sig.data) != len(data_ts.data):
             raise ValueError(
-                f"Signal {i} length {len(sig.data)} != data length {len(data_ts.data)}"
+                f"Signal {i} length {len(sig.data)} != data length "
+                f"{len(data_ts.data)}"
             )
         if sig.epoch != data_ts.epoch:
             raise ValueError(
@@ -24,7 +28,8 @@ def subtract_signals(data_ts: TimeSeries, signals: list[TimeSeries]) -> TimeSeri
             )
         if sig.delta_t != data_ts.delta_t:
             raise ValueError(
-                f"Signal {i} delta_t {sig.delta_t} != data delta_t {data_ts.delta_t}"
+                f"Signal {i} delta_t {sig.delta_t} != data delta_t "
+                f"{data_ts.delta_t}"
             )
 
     residual = data_ts

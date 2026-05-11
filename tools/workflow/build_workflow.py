@@ -147,7 +147,7 @@ def _per_module_input_script(
     base_dataset: str,
     other_signals: list[dict[str, str]],
 ) -> tuple[Path, str]:
-    """Create per-module input data by subtracting all OTHER modules' latest signals."""
+    """Create per-module input data from the other modules' signals."""
     round_tag = _round_tag(round_index)
     module_name = module["name"]
     output_data = round_dir / f"{round_tag}_{module_name}_input_data.h5"
@@ -210,7 +210,8 @@ def _finalize_consolidate_script(
         ]
     )
     for entry in final_round_param_files:
-        lines.append(f'  --module-param "{entry["name"]}={entry["path"]}" \\\n')
+        module_param = f'{entry["name"]}={entry["path"]}'
+        lines.append(f'  --module-param "{module_param}" \\\n')
     lines.append(f'  --output "{output_file}"\n')
 
     content = "".join(lines)
@@ -237,7 +238,9 @@ def _finalize_noise_script(
     return script, str(final_noise)
 
 
-def _master_script(workflow_dir: Path, rounds: int, module_names: list[str]) -> Path:
+def _master_script(
+    workflow_dir: Path, rounds: int, module_names: list[str]
+) -> Path:
     script = workflow_dir / "run_workflow.sh"
     lines = [_script_header()]
 
@@ -251,7 +254,9 @@ def _master_script(workflow_dir: Path, rounds: int, module_names: list[str]) -> 
         lines.append(f'bash "{noise}"\n')
 
         if r > 1:
-            lines.append(f'echo "Preparing per-module input data for {round_tag}"\n')
+            lines.append(
+                f'echo "Preparing per-module input data for {round_tag}"\n'
+            )
             for name in module_names:
                 prep = round_dir / f"{round_tag}_job_prep_{name}_data.sh"
                 lines.append(f'bash "{prep}" &\n')
@@ -268,12 +273,11 @@ def _master_script(workflow_dir: Path, rounds: int, module_names: list[str]) -> 
         lines.append(f'bash "{subtract}"\n\n')
 
     lines.append('echo "Final consolidation and noise estimate"\n')
-    lines.append(
-        f'bash "{workflow_dir / "final" / "finalize_job_consolidate_params.sh"}"\n'
-    )
-    lines.append(
-        f'bash "{workflow_dir / "final" / "finalize_job_final_noise_estimate.sh"}"\n'
-    )
+    final_dir = workflow_dir / "final"
+    consolidate_script = final_dir / "finalize_job_consolidate_params.sh"
+    noise_script = final_dir / "finalize_job_final_noise_estimate.sh"
+    lines.append(f'bash "{consolidate_script}"\n')
+    lines.append(f'bash "{noise_script}"\n')
 
     _write_executable(script, "".join(lines))
     return script
@@ -284,9 +288,8 @@ def build_workflow(config_path: Path) -> dict:
 
     workflow_name = cfg["workflow"]["name"]
     rounds = int(cfg["workflow"]["rounds"])
-    workflow_dir = (
-        Path(cfg["workflow"]["output_dir"]).expanduser().resolve() / workflow_name
-    )
+    output_dir = Path(cfg["workflow"]["output_dir"]).expanduser().resolve()
+    workflow_dir = output_dir / workflow_name
     workflow_dir.mkdir(parents=True, exist_ok=True)
 
     input_data = cfg["input"]["data_file"]
@@ -327,7 +330,10 @@ def build_workflow(config_path: Path) -> dict:
                 other_signals = [
                     prev_round_signals[m["name"]]
                     for m in modules
-                    if m["name"] != module["name"] and m["name"] in prev_round_signals
+                    if (
+                        m["name"] != module["name"]
+                        and m["name"] in prev_round_signals
+                    )
                 ]
                 prep_script, mod_data_file = _per_module_input_script(
                     round_dir=round_dir,
@@ -383,8 +389,9 @@ def build_workflow(config_path: Path) -> dict:
                     }
                 )
 
-        # Combined residual always computed from original data minus all current-round
-        # signals.  This gives the true residual for the noise estimate.
+        # Combined residual is always computed from the original data minus
+        # all current-round signals. This gives the true residual for the noise
+        # estimate.
         subtract_script, combined_residual = _subtract_script(
             round_dir=round_dir,
             round_index=r,
@@ -406,7 +413,10 @@ def build_workflow(config_path: Path) -> dict:
         )
 
         prev_round_signals = {
-            job["name"]: {"file": job["signal_file"], "dataset": job["signal_dataset"]}
+            job["name"]: {
+                "file": job["signal_file"],
+                "dataset": job["signal_dataset"],
+            }
             for job in module_jobs
         }
         current_data = combined_residual
@@ -439,7 +449,9 @@ def build_workflow(config_path: Path) -> dict:
             "final_noise_script": str(final_noise_script),
             "final_residual": current_data,
             "final_noise": final_noise,
-            "consolidated_params": str(final_dir / "final_consolidated_params.yaml"),
+            "consolidated_params": str(
+                final_dir / "final_consolidated_params.yaml"
+            ),
         },
         "master_script": str(master),
     }
@@ -458,9 +470,16 @@ def build_workflow(config_path: Path) -> dict:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="gwaith_build_workflow",
-        description="Generate iterative GWAITH workflow bash scripts from YAML config.",
+        description=(
+            "Generate iterative GWAITH workflow bash scripts from "
+            "YAML config."
+        ),
     )
-    parser.add_argument("--config", required=True, help="Path to workflow config YAML")
+    parser.add_argument(
+        "--config",
+        required=True,
+        help="Path to workflow config YAML",
+    )
     add_gwaith_common_options(parser)
     args = parser.parse_args(argv)
 
