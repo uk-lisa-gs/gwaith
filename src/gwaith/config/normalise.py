@@ -31,14 +31,14 @@ def normalise_config(
             config_type = "workflow"
         else:
             raise ValueError(
-                "Could not infer config type. Provide config_type as " "'workflow'."
+                "Could not infer config type. Provide config_type as 'workflow'."
             )
 
     if config_type == "workflow":
         return normalise_workflow_config(raw)
 
     raise ValueError(
-        f"Unsupported config_type: {config_type!r}. " "Supported values: 'workflow'"
+        f"Unsupported config_type: {config_type!r}. Supported values: 'workflow'"
     )
 
 
