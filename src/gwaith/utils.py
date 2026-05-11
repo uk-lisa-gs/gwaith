@@ -1,4 +1,5 @@
 """Utility functions for the GWAITH package."""
+
 import importlib
 import inspect
 
@@ -11,13 +12,17 @@ __version__ = "0.1.0"
 _LOG_FORMAT = "%(levelname)s:%(asctime)s:%(name)s:%(message)s"
 _LOG_DATEFMT = "%Y-%m-%dT%H:%M:%S%z"
 
+
 def _resolve_version() -> str:
     try:
         return version("gwaith")
     except PackageNotFoundError:
         return __version__
 
-def add_gwaith_common_options(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
+
+def add_gwaith_common_options(
+    parser: argparse.ArgumentParser,
+) -> argparse.ArgumentParser:
     """Add common GWAITH CLI options.
 
     - `--version`: print package version
@@ -37,6 +42,7 @@ def add_gwaith_common_options(parser: argparse.ArgumentParser) -> argparse.Argum
     )
     return parser
 
+
 def init_logging(verbosity: int = 0) -> int:
     """Initialize unified logging format and return selected level."""
     if verbosity <= 0:
@@ -53,14 +59,18 @@ def init_logging(verbosity: int = 0) -> int:
 class _MissingModule:
     def __init__(self, name):
         self._name = name
+
     def __getattr__(self, attr):
         frame = inspect.currentframe()
         outer = inspect.getouterframes(frame, 2)
-        func = outer[1][3] if len(outer) > 1 else '<unknown>'
-        msg = (f"The function '{func}' tried to access attribute '{attr}' of module '"
-                f"{self._name}', but it is not installed. "
-                f"Please install '{self._name}' to enable this functionality.")
+        func = outer[1][3] if len(outer) > 1 else "<unknown>"
+        msg = (
+            f"The function '{func}' tried to access attribute '{attr}' of module '"
+            f"{self._name}', but it is not installed. "
+            f"Please install '{self._name}' to enable this functionality."
+        )
         raise ImportError(msg)
+
 
 def import_optional(module_name):
     """
@@ -82,4 +92,3 @@ def import_optional(module_name):
         return importlib.import_module(module_name)
     except ImportError:
         return _MissingModule(module_name)
-    

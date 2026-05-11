@@ -99,17 +99,23 @@ class FrequencySeries:
 
     def __mul__(self, other: FrequencySeries) -> FrequencySeries:
         self._check_compatible(other)
-        return FrequencySeries(self.data * other.data, self.frequencies, self.epoch, self.delta_t)
+        return FrequencySeries(
+            self.data * other.data, self.frequencies, self.epoch, self.delta_t
+        )
 
     def __rmul__(self, other: FrequencySeries) -> FrequencySeries:
         return self.__mul__(other)
 
     def __truediv__(self, other: FrequencySeries) -> FrequencySeries:
         self._check_compatible(other)
-        return FrequencySeries(self.data / other.data, self.frequencies, self.epoch, self.delta_t)
+        return FrequencySeries(
+            self.data / other.data, self.frequencies, self.epoch, self.delta_t
+        )
 
     def __rtruediv__(self, other: FrequencySeries) -> FrequencySeries:
         if isinstance(other, FrequencySeries):
             other._check_compatible(self)
-            return FrequencySeries(other.data / self.data, self.frequencies, self.epoch, self.delta_t)
+            return FrequencySeries(
+                other.data / self.data, self.frequencies, self.epoch, self.delta_t
+            )
         return NotImplemented

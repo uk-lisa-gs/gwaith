@@ -13,7 +13,12 @@ import logging
 from pathlib import Path
 
 from gwaith import add_gwaith_common_options, init_logging
-from gwaith.io import add_data_input_args, add_data_output_args, load_timeseries, write_timeseries
+from gwaith.io import (
+    add_data_input_args,
+    add_data_output_args,
+    load_timeseries,
+    write_timeseries,
+)
 from gwaith.types import TimeSeries
 from gwaith.tools.examples.common import apply_bounds, get_param_prior, load_prior_file
 
@@ -42,7 +47,9 @@ def main(argv: list[str] | None = None) -> int:
         description="Fit a constant offset and output signal timeseries + parameters.",
     )
     add_data_input_args(parser, data_help="Input HDF5 data file")
-    parser.add_argument("--priors", required=False, help="Optional prior file (.yaml/.yml or .ini)")
+    parser.add_argument(
+        "--priors", required=False, help="Optional prior file (.yaml/.yml or .ini)"
+    )
     parser.add_argument("--init-params", required=False, help=argparse.SUPPRESS)
     add_data_output_args(
         parser,
@@ -51,7 +58,9 @@ def main(argv: list[str] | None = None) -> int:
         default_dataset="signal",
         output_help="Output HDF5 signal file",
     )
-    parser.add_argument("--output-params", required=True, help="Output YAML parameters file")
+    parser.add_argument(
+        "--output-params", required=True, help="Output YAML parameters file"
+    )
     add_gwaith_common_options(parser)
     args = parser.parse_args(argv)
 
@@ -70,7 +79,11 @@ def main(argv: list[str] | None = None) -> int:
         # Emit exactly one scalar value as requested.
         Path(args.output_params).write_text(f"{offset}\n", encoding="utf-8")
 
-        logger.info("Wrote signal to %s and parameters to %s", args.output_signal, args.output_params)
+        logger.info(
+            "Wrote signal to %s and parameters to %s",
+            args.output_signal,
+            args.output_params,
+        )
         return 0
     except Exception as exc:
         logger.error("Error: %s", exc, exc_info=True)

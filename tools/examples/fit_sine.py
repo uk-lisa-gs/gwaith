@@ -16,7 +16,12 @@ import numpy as np
 import yaml
 
 from gwaith import add_gwaith_common_options, init_logging
-from gwaith.io import add_data_input_args, add_data_output_args, load_timeseries, write_timeseries
+from gwaith.io import (
+    add_data_input_args,
+    add_data_output_args,
+    load_timeseries,
+    write_timeseries,
+)
 from gwaith.types import TimeSeries
 from gwaith.tools.examples.common import apply_bounds, get_param_prior, load_prior_file
 
@@ -47,7 +52,9 @@ def _initial_frequency(data: np.ndarray, delta_t: float, prior: dict) -> float:
     return float(freqs[idx])
 
 
-def _fit_component_at_frequency(y: np.ndarray, t: np.ndarray, frequency: float) -> tuple[float, float, np.ndarray]:
+def _fit_component_at_frequency(
+    y: np.ndarray, t: np.ndarray, frequency: float
+) -> tuple[float, float, np.ndarray]:
     w = 2.0 * np.pi * frequency
     s = np.sin(w * t)
     c = np.cos(w * t)
@@ -146,7 +153,9 @@ def sine_model(ts: TimeSeries, components: list[dict[str, float]]) -> TimeSeries
     t = np.arange(len(ts.data)) * ts.delta_t
     model = np.zeros_like(ts.data, dtype=float)
     for comp in components:
-        model += comp["amplitude"] * np.sin(2.0 * np.pi * comp["frequency"] * t + comp["phase"])
+        model += comp["amplitude"] * np.sin(
+            2.0 * np.pi * comp["frequency"] * t + comp["phase"]
+        )
     return TimeSeries(data=model, epoch=ts.epoch, delta_t=ts.delta_t)
 
 
@@ -156,7 +165,9 @@ def main(argv: list[str] | None = None) -> int:
         description="Fit amplitude/frequency/phase and output signal timeseries + parameters.",
     )
     add_data_input_args(parser, data_help="Input HDF5 data file")
-    parser.add_argument("--priors", required=False, help="Optional prior file (.yaml/.yml or .ini)")
+    parser.add_argument(
+        "--priors", required=False, help="Optional prior file (.yaml/.yml or .ini)"
+    )
     parser.add_argument("--init-params", required=False, help=argparse.SUPPRESS)
     add_data_output_args(
         parser,
@@ -165,7 +176,9 @@ def main(argv: list[str] | None = None) -> int:
         default_dataset="signal",
         output_help="Output HDF5 signal file",
     )
-    parser.add_argument("--output-params", required=True, help="Output YAML parameters file")
+    parser.add_argument(
+        "--output-params", required=True, help="Output YAML parameters file"
+    )
     add_gwaith_common_options(parser)
     args = parser.parse_args(argv)
 
@@ -185,9 +198,15 @@ def main(argv: list[str] | None = None) -> int:
             "model": "sine",
             "sine_waves": components,
         }
-        Path(args.output_params).write_text(yaml.safe_dump(out, sort_keys=False), encoding="utf-8")
+        Path(args.output_params).write_text(
+            yaml.safe_dump(out, sort_keys=False), encoding="utf-8"
+        )
 
-        logger.info("Wrote signal to %s and parameters to %s", args.output_signal, args.output_params)
+        logger.info(
+            "Wrote signal to %s and parameters to %s",
+            args.output_signal,
+            args.output_params,
+        )
         return 0
     except Exception as exc:
         logger.error("Error: %s", exc, exc_info=True)

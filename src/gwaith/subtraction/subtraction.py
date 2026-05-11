@@ -32,4 +32,3 @@ def subtract_signals(data_ts: TimeSeries, signals: list[TimeSeries]) -> TimeSeri
         residual = residual - sig
 
     return residual
-

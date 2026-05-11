@@ -5,7 +5,9 @@ from __future__ import annotations
 from typing import Any
 
 
-def normalise_config(raw: dict[str, Any], config_type: str | None = None) -> dict[str, Any]:
+def normalise_config(
+    raw: dict[str, Any], config_type: str | None = None
+) -> dict[str, Any]:
     """Normalise configuration using a generic dispatcher.
 
     Parameters
@@ -29,16 +31,14 @@ def normalise_config(raw: dict[str, Any], config_type: str | None = None) -> dic
             config_type = "workflow"
         else:
             raise ValueError(
-                "Could not infer config type. Provide config_type as "
-                "'workflow'."
+                "Could not infer config type. Provide config_type as " "'workflow'."
             )
 
     if config_type == "workflow":
         return normalise_workflow_config(raw)
 
     raise ValueError(
-        f"Unsupported config_type: {config_type!r}. "
-        "Supported values: 'workflow'"
+        f"Unsupported config_type: {config_type!r}. " "Supported values: 'workflow'"
     )
 
 
@@ -112,7 +112,11 @@ def normalise_workflow_config(raw: dict[str, Any]) -> dict[str, Any]:
                 {
                     "name": str(name),
                     "executable": str(executable),
-                    "priors": str(mod["priors"]) if "priors" in mod and mod["priors"] else None,
+                    "priors": (
+                        str(mod["priors"])
+                        if "priors" in mod and mod["priors"]
+                        else None
+                    ),
                     "signal_dataset": str(mod.get("signal_dataset", "signal")),
                 }
             )

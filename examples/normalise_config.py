@@ -43,8 +43,12 @@ def normalise_example_generation_config(raw: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("'output' must be a mapping")
 
     # Keep backward compatibility with the old single plot_file option.
-    plot_time_file = output.get("plot_time_file", output.get("plot_file", "example_data_plot_time.png"))
-    plot_frequency_file = output.get("plot_frequency_file", "example_data_plot_frequency.png")
+    plot_time_file = output.get(
+        "plot_time_file", output.get("plot_file", "example_data_plot_time.png")
+    )
+    plot_frequency_file = output.get(
+        "plot_frequency_file", "example_data_plot_frequency.png"
+    )
 
     return {
         "seed": int(raw.get("seed", 12345)),

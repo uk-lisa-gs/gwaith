@@ -50,7 +50,7 @@ def _noise_script(
     noise_file = round_dir / f"{round_tag}_noise.h5"
     script = round_dir / f"{round_tag}_job_noise_estimate.sh"
     content = _script_header() + (
-        f'{estimate_psd_cmd} \\\n'
+        f"{estimate_psd_cmd} \\\n"
         f'  --data "{data_in}" \\\n'
         f'  --data-dataset "{data_dataset}" \\\n'
         f'  --output "{noise_file}" \\\n'
@@ -79,7 +79,7 @@ def _module_script(
 
     lines = [
         _script_header(),
-        f'{executable} \\\n',
+        f"{executable} \\\n",
         f'  --data "{data_in}" \\\n',
         f'  --data-dataset "{data_dataset}" \\\n',
     ]
@@ -205,7 +205,7 @@ def _finalize_consolidate_script(
             "else\n",
             "  CMD=(python3 -m gwaith.tools.workflow.consolidate_params)\n",
             "fi\n\n",
-            "\"${CMD[@]}\" \\\n",
+            '"${CMD[@]}" \\\n',
             f"  --round {final_round} \\\n",
         ]
     )
@@ -227,7 +227,7 @@ def _finalize_noise_script(
     final_noise = final_dir / "final_noise_estimate.h5"
 
     content = _script_header() + (
-        f'{estimate_psd_cmd} \\\n'
+        f"{estimate_psd_cmd} \\\n"
         f'  --data "{final_residual}" \\\n'
         '  --data-dataset "data" \\\n'
         f'  --output "{final_noise}" \\\n'
@@ -255,7 +255,7 @@ def _master_script(workflow_dir: Path, rounds: int, module_names: list[str]) -> 
             for name in module_names:
                 prep = round_dir / f"{round_tag}_job_prep_{name}_data.sh"
                 lines.append(f'bash "{prep}" &\n')
-            lines.append('wait\n')
+            lines.append("wait\n")
 
         lines.append(f'echo "Running {round_tag} module jobs in parallel"\n')
 
@@ -263,13 +263,17 @@ def _master_script(workflow_dir: Path, rounds: int, module_names: list[str]) -> 
             job = round_dir / f"{round_tag}_job_fit_{name}.sh"
             lines.append(f'bash "{job}" &\n')
 
-        lines.append('wait\n')
+        lines.append("wait\n")
         lines.append(f'echo "Combining residuals for {round_tag}"\n')
         lines.append(f'bash "{subtract}"\n\n')
 
     lines.append('echo "Final consolidation and noise estimate"\n')
-    lines.append(f'bash "{workflow_dir / "final" / "finalize_job_consolidate_params.sh"}"\n')
-    lines.append(f'bash "{workflow_dir / "final" / "finalize_job_final_noise_estimate.sh"}"\n')
+    lines.append(
+        f'bash "{workflow_dir / "final" / "finalize_job_consolidate_params.sh"}"\n'
+    )
+    lines.append(
+        f'bash "{workflow_dir / "final" / "finalize_job_final_noise_estimate.sh"}"\n'
+    )
 
     _write_executable(script, "".join(lines))
     return script
@@ -280,7 +284,9 @@ def build_workflow(config_path: Path) -> dict:
 
     workflow_name = cfg["workflow"]["name"]
     rounds = int(cfg["workflow"]["rounds"])
-    workflow_dir = Path(cfg["workflow"]["output_dir"]).expanduser().resolve() / workflow_name
+    workflow_dir = (
+        Path(cfg["workflow"]["output_dir"]).expanduser().resolve() / workflow_name
+    )
     workflow_dir.mkdir(parents=True, exist_ok=True)
 
     input_data = cfg["input"]["data_file"]
@@ -370,10 +376,12 @@ def build_workflow(config_path: Path) -> dict:
                 }
             )
             if r == rounds:
-                final_round_param_files.append({
-                    "name": module["name"],
-                    "path": params_file,
-                })
+                final_round_param_files.append(
+                    {
+                        "name": module["name"],
+                        "path": params_file,
+                    }
+                )
 
         # Combined residual always computed from original data minus all current-round
         # signals.  This gives the true residual for the noise estimate.
