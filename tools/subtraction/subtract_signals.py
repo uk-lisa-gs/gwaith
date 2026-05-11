@@ -24,7 +24,10 @@ def main(argv: list[str] | None = None) -> int:
     """Main entry point for ``gwaith_subtract_signals``."""
     parser = argparse.ArgumentParser(
         prog="gwaith_subtract_signals",
-        description="Subtract one or more signal HDF5 files from a data HDF5 file.",
+        description=(
+            "Subtract one or more signal HDF5 files from a data "
+            "HDF5 file."
+        ),
     )
     add_data_input_args(parser, data_help="Path to HDF5 data file")
     add_signal_input_args(parser)
@@ -47,7 +50,11 @@ def main(argv: list[str] | None = None) -> int:
 
         residual = subtract_signals(data_ts, signals)
 
-        logger.info("Writing residual to %s [%s]", args.output, args.output_dataset)
+        logger.info(
+            "Writing residual to %s [%s]",
+            args.output,
+            args.output_dataset,
+        )
         write_timeseries(residual, args.output, args.output_dataset)
         return 0
 

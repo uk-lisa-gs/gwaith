@@ -15,17 +15,16 @@ import argparse
 from pathlib import Path
 
 import matplotlib
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
-import numpy as np
-import yaml
-from normalise_config import normalise_example_generation_config
 
-from gwaith.config import (
-    load_config,
-)
-from gwaith.io import write_timeseries
-from gwaith.types import TimeSeries
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt  # noqa: E402
+import numpy as np  # noqa: E402
+import yaml  # noqa: E402
+from normalise_config import normalise_example_generation_config  # noqa: E402
+
+from gwaith.config import load_config  # noqa: E402
+from gwaith.io import write_timeseries  # noqa: E402
+from gwaith.types import TimeSeries  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
@@ -64,8 +63,13 @@ def build_nonwhite_psd(freqs: np.ndarray, noise_cfg: dict) -> np.ndarray:
     return psd
 
 
-def generate_colored_noise(psd: np.ndarray, delta_t: float, n_samples: int, rng: np.random.Generator) -> np.ndarray:
-    """Generate approximate colored Gaussian noise from a target one-sided PSD."""
+def generate_colored_noise(
+    psd: np.ndarray, delta_t: float, n_samples: int, rng: np.random.Generator
+) -> np.ndarray:
+    """Generate approximate colored Gaussian noise.
+
+    The target spectrum is one-sided.
+    """
     white = rng.normal(0.0, 1.0, size=n_samples)
     white_fft = np.fft.rfft(white)
 
@@ -79,12 +83,16 @@ def generate_colored_noise(psd: np.ndarray, delta_t: float, n_samples: int, rng:
     return np.fft.irfft(shaped_fft, n=n_samples)
 
 
-def generate_signal(t: np.ndarray, signal_cfg: dict) -> tuple[np.ndarray, dict, list[dict]]:
+def generate_signal(
+    t: np.ndarray, signal_cfg: dict
+) -> tuple[np.ndarray, dict, list[dict]]:
     offset = float(signal_cfg["offset"])
     sine_waves = signal_cfg["sine_waves"]
 
     if not isinstance(sine_waves, list) or len(sine_waves) != 5:
-        raise ValueError("Config must contain exactly five entries in 'sine_waves'.")
+        raise ValueError(
+            "Config must contain exactly five entries in 'sine_waves'."
+        )
 
     frequencies = [float(w["frequency"]) for w in sine_waves]
     if len(set(frequencies)) != len(frequencies):
@@ -99,12 +107,14 @@ def generate_signal(t: np.ndarray, signal_cfg: dict) -> tuple[np.ndarray, dict, 
         phase = float(wave.get("phase", 0.0))
         component = amp * np.sin(2.0 * np.pi * freq * t + phase)
         signal += component
-        components.append({
-            "amplitude": amp,
-            "frequency": freq,
-            "phase": phase,
-            "series": component,
-        })
+        components.append(
+            {
+                "amplitude": amp,
+                "frequency": freq,
+                "phase": phase,
+                "series": component,
+            }
+        )
 
     components.sort(key=lambda x: x["frequency"])
 
@@ -117,13 +127,17 @@ def generate_signal(t: np.ndarray, signal_cfg: dict) -> tuple[np.ndarray, dict, 
         for comp in components
     ]
 
-    return signal, {
-        "offset": {
-            "model": "offset",
-            "value": offset,
+    return (
+        signal,
+        {
+            "offset": {
+                "model": "offset",
+                "value": offset,
+            },
+            "sine_waves": truth_components,
         },
-        "sine_waves": truth_components,
-    }, components
+        components,
+    )
 
 
 def plot_example_data_time(
@@ -161,7 +175,14 @@ def plot_example_data_time(
             color=color,
             label=f"sine {i + 1} (f={comp['frequency']:.1e} Hz)",
         )
-    axes[1].plot(t_plot_days, np.full_like(t_plot_days, offset_value), lw=1.2, color="0.35", ls="--", label="offset")
+    axes[1].plot(
+        t_plot_days,
+        np.full_like(t_plot_days, offset_value),
+        lw=1.2,
+        color="0.35",
+        ls="--",
+        label="offset",
+    )
     axes[1].set_ylabel("signal")
     axes[1].legend(loc="upper right", fontsize=8, ncol=2)
     axes[1].grid(alpha=0.25)
@@ -176,7 +197,9 @@ def plot_example_data_time(
     plt.close(fig)
 
 
-def _magnitude_spectrum(x: np.ndarray, delta_t: float) -> tuple[np.ndarray, np.ndarray]:
+def _magnitude_spectrum(
+    x: np.ndarray, delta_t: float
+) -> tuple[np.ndarray, np.ndarray]:
     freqs = np.fft.rfftfreq(len(x), d=delta_t)
     mags = np.abs(np.fft.rfft(x)) / len(x)
     return freqs, mags
@@ -189,7 +212,10 @@ def plot_example_data_frequency(
     delta_t: float,
     output_path: Path,
 ) -> None:
-    """Save a frequency-domain diagnostic plot with individual sine components."""
+    """Save a frequency-domain diagnostic plot.
+
+    The plot shows individual sine components.
+    """
     freqs, data_mag = _magnitude_spectrum(data, delta_t)
     _, noise_mag = _magnitude_spectrum(noise, delta_t)
 
@@ -229,11 +255,16 @@ def plot_example_data_frequency(
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="generate_example_data",
-        description="Generate example data (colored noise + offset + five sines) for GWAITH.",
+        description=(
+            "Generate example data (colored noise + offset + five sines) "
+            "for GWAITH."
+        ),
     )
     parser.add_argument(
         "--config",
-        default=str(REPO_ROOT / "examples" / "example_generation_config.yaml"),
+        default=str(
+            REPO_ROOT / "examples" / "example_generation_config.yaml"
+        ),
         help="Path to YAML config file",
     )
     args = parser.parse_args(argv)
@@ -254,7 +285,9 @@ def main(argv: list[str] | None = None) -> int:
     rng = np.random.default_rng(seed)
     noise = generate_colored_noise(psd, delta_t, n_samples, rng)
 
-    signal, signal_params, signal_components = generate_signal(t, cfg["signal"])
+    signal, signal_params, signal_components = generate_signal(
+        t, cfg["signal"]
+    )
     data = noise + signal
 
     output_cfg = cfg["output"]

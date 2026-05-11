@@ -47,7 +47,8 @@ def estimate_psd(
     fs : float, optional
         Sampling frequency (default 1 Hz).
     nperseg : int, optional
-        Length of each segment. If None, uses 256 or len(data)//8, whichever is smaller.
+        Length of each segment. If None, uses 256 or len(data)//8,
+        whichever is smaller.
     noverlap : int, optional
         Number of points to overlap. If None, uses nperseg // 2.
 
@@ -75,7 +76,10 @@ def main(argv: list[str] | None = None) -> int:
     )
     add_data_input_args(
         parser,
-        data_help="Path to HDF5 data file (e.g. residual from gwaith_subtract_signals)",
+        data_help=(
+            "Path to HDF5 data file (e.g. residual from "
+            "gwaith_subtract_signals)"
+        ),
     )
     add_data_output_args(
         parser,
@@ -83,10 +87,21 @@ def main(argv: list[str] | None = None) -> int:
         default_dataset="psd",
         output_help="Output HDF5 file for PSD",
     )
-    parser.add_argument("--fs", type=float, default=None,
-                        help="Sampling frequency in Hz; derived from file delta_t if not given")
-    parser.add_argument("--nperseg", type=int, default=None, help="Segment length for Welch")
-    parser.add_argument("--noverlap", type=int, default=None, help="Overlap length for Welch")
+    parser.add_argument(
+        "--fs",
+        type=float,
+        default=None,
+        help=(
+            "Sampling frequency in Hz; derived from file delta_t "
+            "if not given"
+        ),
+    )
+    parser.add_argument(
+        "--nperseg", type=int, default=None, help="Segment length for Welch"
+    )
+    parser.add_argument(
+        "--noverlap", type=int, default=None, help="Overlap length for Welch"
+    )
     add_gwaith_common_options(parser)
 
     args = parser.parse_args(argv)
@@ -97,13 +112,17 @@ def main(argv: list[str] | None = None) -> int:
         data_ts = load_timeseries(args.data, args.data_dataset)
         logger.info(
             "Loaded %d samples (epoch=%.3f, delta_t=%.6g)",
-            len(data_ts.data), data_ts.epoch, data_ts.delta_t,
+            len(data_ts.data),
+            data_ts.epoch,
+            data_ts.delta_t,
         )
 
         fs = args.fs if args.fs is not None else 1.0 / data_ts.delta_t
 
         logger.info("Estimating PSD with Welch method")
-        freqs, psd = estimate_psd(data_ts.data, fs=fs, nperseg=args.nperseg, noverlap=args.noverlap)
+        freqs, psd = estimate_psd(
+            data_ts.data, fs=fs, nperseg=args.nperseg, noverlap=args.noverlap
+        )
         freq_series = FrequencySeries(
             data=psd,
             frequencies=freqs,
@@ -112,9 +131,15 @@ def main(argv: list[str] | None = None) -> int:
         )
 
         if args.output:
-            logger.info("Writing PSD to %s [%s]", args.output, args.output_dataset)
+            logger.info(
+                "Writing PSD to %s [%s]",
+                args.output,
+                args.output_dataset,
+            )
             write_frequencyseries(
-                freq_series, args.output, args.output_dataset,
+                freq_series,
+                args.output,
+                args.output_dataset,
                 fs=fs,
                 nperseg=args.nperseg if args.nperseg else "auto",
                 noverlap=args.noverlap if args.noverlap else "auto",

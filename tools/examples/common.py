@@ -18,7 +18,9 @@ def load_prior_file(path: str) -> dict[str, Any]:
         with p.open("r", encoding="utf-8") as f:
             data = yaml.safe_load(f) or {}
         if not isinstance(data, dict):
-            raise ValueError("YAML prior file must parse to a mapping/dictionary")
+            raise ValueError(
+                "YAML prior file must parse to a mapping/dictionary"
+            )
         return data
 
     if suffix == ".ini":
@@ -26,7 +28,9 @@ def load_prior_file(path: str) -> dict[str, Any]:
         parser.read(path)
         out: dict[str, Any] = {}
         for section in parser.sections():
-            out[section] = {k: _coerce_numeric(v) for k, v in parser.items(section)}
+            out[section] = {
+                k: _coerce_numeric(v) for k, v in parser.items(section)
+            }
         return out
 
     raise ValueError("Unsupported prior file type. Use .yaml/.yml or .ini")

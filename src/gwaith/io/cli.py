@@ -21,7 +21,10 @@ def add_data_input_args(
     grp.add_argument(
         dataset_option,
         default=default_dataset,
-        help=dataset_help or f"Dataset in {data_option} (default: {default_dataset})",
+        help=(
+            dataset_help
+            or f"Dataset in {data_option} (default: {default_dataset})"
+        ),
     )
     return grp
 
@@ -42,12 +45,17 @@ def add_data_output_args(
     grp.add_argument(
         dataset_option,
         default=default_dataset,
-        help=dataset_help or f"Dataset in {output_option} (default: {default_dataset})",
+        help=(
+            dataset_help
+            or f"Dataset in {output_option} (default: {default_dataset})"
+        ),
     )
     return grp
 
 
-def add_signal_input_args(parser: argparse.ArgumentParser) -> argparse._ArgumentGroup:
+def add_signal_input_args(
+    parser: argparse.ArgumentParser,
+) -> argparse._ArgumentGroup:
     """Add signal-file input and signal-dataset CLI arguments."""
     grp = parser.add_argument_group("signal input")
     grp.add_argument(
@@ -62,7 +70,10 @@ def add_signal_input_args(parser: argparse.ArgumentParser) -> argparse._Argument
         nargs="+",
         default=None,
         metavar="DATASET",
-        help="Dataset name(s) in signal files; one per file or a single value broadcast to all (default: 'signal')",
+        help=(
+            "Dataset name(s) in signal files; one per file or a single "
+            "value broadcast to all (default: 'signal')"
+        ),
     )
     return grp
 

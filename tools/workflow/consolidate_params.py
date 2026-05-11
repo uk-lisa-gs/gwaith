@@ -17,7 +17,8 @@ logger = logging.getLogger("gwaith.workflow.consolidate")
 def _parse_module_param(value: str) -> tuple[str, str]:
     if "=" not in value:
         raise argparse.ArgumentTypeError(
-            "--module-param entries must be in the form <module_name>=<path>"
+            "--module-param entries must be in the form "
+            "<module_name>=<path>"
         )
     name, path = value.split("=", 1)
     name = name.strip()
@@ -53,17 +54,32 @@ def consolidate_params(
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="gwaith_consolidate_params",
-        description="Consolidate final-round workflow parameter files into one YAML output.",
+        description=(
+            "Consolidate final-round workflow parameter files into "
+            "one YAML output."
+        ),
     )
-    parser.add_argument("--round", type=int, required=True, help="Final round index")
+    parser.add_argument(
+        "--round",
+        type=int,
+        required=True,
+        help="Final round index",
+    )
     parser.add_argument(
         "--module-param",
         action="append",
         default=[],
         type=_parse_module_param,
-        help="Module output mapping in the form <module_name>=<params_yaml_path>. Repeat for each module.",
+        help=(
+            "Module output mapping in the form "
+            "<module_name>=<params_yaml_path>. Repeat for each module."
+        ),
     )
-    parser.add_argument("--output", required=True, help="Output consolidated YAML path")
+    parser.add_argument(
+        "--output",
+        required=True,
+        help="Output consolidated YAML path",
+    )
     add_gwaith_common_options(parser)
     args = parser.parse_args(argv)
 
