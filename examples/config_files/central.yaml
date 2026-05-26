@@ -1,6 +1,8 @@
 processor:
   options:
-    input-file: examples/example_data/example_data.h5
+    input-file: file:../example_data/example_data.hdf
     input-dataset: data
 
 subtraction:
+  options:
+    verbose:

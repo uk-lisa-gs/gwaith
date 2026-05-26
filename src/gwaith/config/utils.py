@@ -41,13 +41,13 @@ def get_dict_value(data_dict, path_list):
 
 _TOKEN_RE = re.compile(r'\$\{([^}]+)\}')
 
-def resolve_match(string_to_match, dict_in, path=None):
+def resolve_match(string_to_match, full_dict, path=None):
     if path is None:
         path = []
 
     # If it's not a string at all, we can't interpolate - raise an error
     if not isinstance(string_to_match, str):
-        logger.error("Could not work out how to interpolate [%s]", ']['.join(path))
+        logger.error("Could not work out how to interpolate %s", string_to_match)
 
     if not re.search(_TOKEN_RE, string_to_match):
         logger.debug(f"No interpolation required for: [%s]", ']['.join(path))
@@ -65,43 +65,48 @@ def resolve_match(string_to_match, dict_in, path=None):
             path_to_resolve_to = content.split('|')
 
         # Get the value (recursive call to handle nested interpolations)
-        resolved_value = get_dict_value(dict_in, path_to_resolve_to)
+        resolved_value = get_dict_value(full_dict, path_to_resolve_to)
         
         # Ensure the resolved value is passed back through interpolation 
         # in case the result itself contains tokens
-        return str(resolve_match(resolved_value, dict_in, path=path_to_resolve_to))
+        return str(resolve_match(resolved_value, full_dict, path=path_to_resolve_to))
 
     # re.sub finds every ${...} and replaces it with the output of replace_token
     interpolated_result = re.sub(_TOKEN_RE, replace_token, string_to_match)
     
     return interpolated_result
 
-def interpolate_list(l, dict_in, path=None):
+def interpolate_list(l, full_dict, path=None):
     if path is None:
         path = []
     for i, v in enumerate(l):
         current_path = path + [str(i)]
         logger.debug('Interpolating values from list [%s], value %d', ']['.join(path), i)
         if isinstance(v, dict):
-            interpolate_dict(v, path=current_path)
+            interpolate_dict(v, full_dict, path=current_path)
         if isinstance(v, list):
-            interpolate_list(v, path=current_path)
+            interpolate_list(v, full_dict, path=current_path)
+        elif isinstance(v, str):
+            l[i] = resolve_match(v, full_dict, path=current_path)
         else:
-            l[i] = resolve_match(v, dict_in, path=current_path)
+            logger.error(f"Unknown how to handle value {v}, type {type(v)}")
+    return l
 
-def interpolate_dict(d, dict_in, path=None):
+def interpolate_dict(d, full_dict=None, path=None):
     if path is None:
         path = []
+    if full_dict is None: 
+        full_dict = d
     logger.debug('Interpolating values in [%s]', ']['.join(path))
     for k, v in list(d.items()):
         current_path = path + [str(k)]
         logger.debug('Interpolating values in [%s]', ']['.join(current_path))
         if isinstance(v, dict):
-            interpolate_dict(v, dict_in, path=current_path)
+            interpolate_dict(v, full_dict, path=current_path)
         elif isinstance(v, list):
-            d[k] = interpolate_list(v, dict_in, path=current_path)
+            d[k] = interpolate_list(v, full_dict, path=current_path)
         else:
-            d[k] = resolve_match(v, dict_in, path=current_path)
+            d[k] = resolve_match(v, full_dict, path=current_path)
 
 __all__ = [
     "safe_update",

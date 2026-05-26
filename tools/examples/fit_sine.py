@@ -23,7 +23,7 @@ from gwaith.io import (
     write_timeseries,
 )
 from gwaith.types import TimeSeries
-from gwaith.tools.examples.common import (
+from .common import (
     apply_bounds,
     get_param_prior,
     load_prior_file,
@@ -193,6 +193,18 @@ def main(argv: list[str] | None = None) -> int:
         required=False,
         help=argparse.SUPPRESS,
     )
+    parser.add_argument(
+        "--f-low",
+        type=float,
+        required=False,
+        help="Optional lower frequency bound (Hz)",
+    )
+    parser.add_argument(
+        "--f-high",
+        type=float,
+        required=False,
+        help="Optional upper frequency bound (Hz)",
+    )
     add_data_output_args(
         parser,
         output_option="--output-signal",
@@ -215,6 +227,16 @@ def main(argv: list[str] | None = None) -> int:
 
         prior_path = args.priors or args.init_params
         priors = load_prior_file(prior_path) if prior_path else {}
+        
+        # Override frequency bounds if provided on command line
+        if args.f_low is not None or args.f_high is not None:
+            freq_prior = priors.get("frequency", {})
+            if args.f_low is not None:
+                freq_prior["min"] = float(args.f_low)
+            if args.f_high is not None:
+                freq_prior["max"] = float(args.f_high)
+            priors["frequency"] = freq_prior
+        
         components = fit_sine_parameters(data_ts, priors)
 
         signal_ts = sine_model(data_ts, components)

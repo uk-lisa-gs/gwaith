@@ -4,10 +4,15 @@ from .helpers import (
     register_file,
     register_node
 )
+from .generator import (
+    build_workflow,
+    build_workflow_graph,
+)
 from .types import (
     GwaithFile,
     GwaithNode,
-    GwaithStream
+    GwaithStream,
+    GwaithWorkflow
 )
 
 def add_workflow_input_options(parser):
@@ -26,8 +31,11 @@ __all__ = [
     'GwaithFile',
     'GwaithNode',
     'GwaithStream',
+    'GwaithWorkflow',
     'make_file_uid',
     'make_node_uid',
     'register_file',
     'register_node',
+    'build_workflow',
+    'build_workflow_graph',
 ]

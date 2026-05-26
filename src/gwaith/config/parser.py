@@ -14,7 +14,16 @@ from .utils import safe_update, interpolate_dict
 logger = logging.getLogger('gwaith.config.parser')
 
 _DEFAULT_SECTION_KEYS = ('workflow', 'executables', 'default_resources')
+_CONFIG_RELATIVE_PREFIX = "file:"
 
+def add_config_input_options(parser):
+    parser.add_argument(
+        '--config-files',
+        required=True,
+        nargs='+',
+        help='Configuration files to control the workflow'
+    )
+    
 class GwaithConfigParser:
     """Interpolation-capable parser for YAML and INI configuration files.
 
@@ -35,6 +44,7 @@ class GwaithConfigParser:
 
         logger.info("Loading Config")
         self.input_files = args.config_files
+        self._config_base_dir = Path(self.input_files[0]).expanduser().resolve().parent
         self.args = args
         self.file_types = self.config_file_types()
         self._data = self.read_config(args.config_files)
@@ -74,37 +84,6 @@ class GwaithConfigParser:
     def has_section(self, section):
         """Whether a section exists and is a mapping."""
         return isinstance(self._data.get(section), dict)
-
-    # def _resolve_mapping(self, value, *, current_section, stack):
-    #     """
-    #     Args:
-    #         value (dict[str, Any]):
-    #         current_section (str | None):
-    #         stack (list[tuple[str, str]]):
-
-    #     Returns:
-    #         dict[str, Any]:
-    #     """
-    #     out: dict[str, Any] = {}
-    #     for key, item in value.items():
-    #         section_for_child = key if isinstance(item, dict) else current_section
-    #         out[key] = self._resolve_value(item, current_section=section_for_child, stack=stack)
-    #     return out
-    
-    # def _resolve_value(self, value, *, current_section, stack):
-    #     """
-    #     Args:
-    #         value (Any):
-    #         current_section (str | None):
-    #         stack (list[tuple[str, str]]):
-
-    #     Returns:
-    #         Any:
-    #     """ 
-    #     if isinstance(value, dict):
-    #         return self._resolve_mapping(value, current_section=current_section, stack=stack)
-    #     else:
-    #         return value
 
     def config_file_types(self):
         """
@@ -150,14 +129,47 @@ class GwaithConfigParser:
          - add resources to all sections. this will use the default values if it isnt defined on a per-node basis
         """
         self._interpolate_values()
+        self._resolve_config_relative_paths()
         self._apply_default_resources()
         self._check_executables()
+
+    def _resolve_config_relative_paths(self) -> None:
+        """Resolve explicit ``file:`` values relative to config directory."""
+        logger.debug('Resolving config-relative paths')
+
+        def _resolve_filename(value: str) -> str:
+            if value.startswith(_CONFIG_RELATIVE_PREFIX):
+                relative_path = value[len(_CONFIG_RELATIVE_PREFIX):]
+                candidate = Path(relative_path).expanduser()
+                if candidate.is_absolute():
+                    return str(candidate)
+                return str((self._config_base_dir / candidate).resolve())
+
+            return value
+
+        def _resolve_filenames(value: Any) -> Any:
+            if isinstance(value, dict):
+                return {
+                    child_key: _resolve_filenames(item)
+                    for child_key, item in value.items()
+                }
+
+            if isinstance(value, list):
+                return [_resolve_filenames(item) for item in value]
+
+            if isinstance(value, str):
+                if value.startswith(_CONFIG_RELATIVE_PREFIX):
+                    return _resolve_filename(value)
+
+            return value
+
+        self._data = _resolve_filenames(self._data)
 
     def _interpolate_values(self) -> None:
         """Interpolate values like ${section|value} and grab the value from section['options'][value]."""
         logger.debug('Interpolating values')
         
-        interpolate_dict(self._data, self._data)
+        interpolate_dict(self._data)
 
     def _apply_default_resources(self) -> None:
         """Add resources to all sections. This will use the default values if they are "

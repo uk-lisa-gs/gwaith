@@ -90,7 +90,7 @@ def plot_example_data_time(
         )
 
     axes[1].set_ylabel("Signal Components")
-    axes[1].legend(loc="upper right", fontsize=8, ncol=2)
+    axes[1].legend(loc="upper left", fontsize=8, ncol=2)
     axes[2].plot(t_days, noise, lw=0.8)
     axes[2].set_ylabel('Noise')
     axes[2].set_xlabel('Time [days]')
@@ -130,8 +130,7 @@ def plot_example_data_frequency(
     axes[0].loglog(freqs[mask], data_mag[mask], lw=1.0, label='Data')
     axes[0].loglog(freqs[mask], noise_mag[mask], lw=1.0, label='Noise')
     axes[0].set_ylabel('|FFT|')
-    axes[0].set_title('Generated Example Data (Frequency Domain)')
-    axes[0].legend(loc='upper right', fontsize=8)
+    axes[0].set_title('Generated Example Data')
 
     axes[0].loglog(
         freqs[mask],
@@ -158,7 +157,7 @@ def plot_example_data_frequency(
 
     for ax in axes:
         ax.grid(alpha=0.25, which='both')
-        ax.legend(loc='upper right', fontsize=8, ncol=2)
+        ax.legend(loc='upper left')
     fig.savefig(output_path, dpi=150)
 
 
@@ -208,6 +207,12 @@ def main(argv: list[str] | None = None) -> int:
         "amplitude:frequency:phase."
     )
     parser.add_argument(
+        "--sine-gaussians",
+        nargs="+",
+        help="Details for the sine-gaussian components, in the form "
+        "time:width:amplitude:frequency:phase."
+    )
+    parser.add_argument(
         "--offset",
         type=float,
         help="Value by which the data is offset from zero."
@@ -251,6 +256,35 @@ def main(argv: list[str] | None = None) -> int:
                     f"from '{wave_str}': {e}"
                 )
             sine_wave_config[i] = {
+                "amplitude": amplitude,
+                "frequency": frequency,
+                "phase": phase,
+            }
+            
+    sine_gaussian_config = {}
+    if args.sine_gaussians:
+        logger.debug("Loading sine gaussian config")
+        for i, wave_str in enumerate(args.sine_gaussians):
+            parts = wave_str.split(':')
+            if len(parts) != 5:
+                parser.error(
+                    f"Sine gaussian {i}: expected 'time:width:amplitude:frequency:phase' "
+                    f"but got '{wave_str}'"
+                )
+            try:
+                central_time = float(parts[0])
+                width = float(parts[1])
+                amplitude = float(parts[2])
+                frequency = float(parts[3])
+                phase = float(parts[4])
+            except ValueError as e:
+                parser.error(
+                    f"Sine-gaussian {i}: could not parse 'time:width:amplitude:frequency:phase' "
+                    f"from '{wave_str}': {e}"
+                )
+            sine_gaussian_config[i] = {
+                "central_time": central_time,
+                "width": width,
                 "amplitude": amplitude,
                 "frequency": frequency,
                 "phase": phase,
@@ -322,6 +356,28 @@ def main(argv: list[str] | None = None) -> int:
             delta_t=args.delta_t
         )
 
+    for idx, params in sine_gaussian_config.items():
+        amp = params["amplitude"]
+        t0 = params["central_time"]
+        width = params["width"]
+        frequency = params["frequency"]
+        phase = params["phase"]
+
+        gaussian_envelope =  amp * np.exp(
+            -(t - t0) ** 2 / (2 * width ** 2)
+        )
+        sinusoidal_component = np.sin(
+            2.0 * np.pi * frequency * t + phase
+        )
+
+        component_data = gaussian_envelope * sinusoidal_component
+
+        component_ts_dict[f"sine_gaussian_{idx}"] = TimeSeries(
+            data=component_data,
+            epoch=args.epoch,
+            delta_t=args.delta_t
+        )
+
     component_ts_dict["offset"] = TimeSeries(
         data=np.ones_like(t) * offset,
         epoch=args.epoch,
@@ -382,11 +438,7 @@ def main(argv: list[str] | None = None) -> int:
     with truth_file.open('w', encoding='utf-8') as f:
         yaml.safe_dump(truth, f, sort_keys=False)
 
-    # logger.info('Wrote data: %s', data_file)
-    # logger.info('Wrote truth: %s', truth_file)
-    # logger.info('Wrote plot (time): %s', plot_time_file)
-    # logger.info('Wrote plot (frequency): %s', plot_frequency_file)
-    # return 0
+    return 0
 
 if __name__ == '__main__':
     raise SystemExit(main())

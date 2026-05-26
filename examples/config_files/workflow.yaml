@@ -6,9 +6,11 @@ executables:
   subtraction: gwaith_subtract_signals
   sine_high_band: gwaith_fit_sine
   sine_low_band: gwaith_fit_sine
+  sine_gaussian: gwaith_fit_sine_gaussian
   noise: gwaith_estimate_psd
   offset: gwaith_fit_offset
   processor: gwaith_process_data
+  # sine_gaussian: gwaith_fit_sine_gaussian
 
 default_resources:
     cpus: 1

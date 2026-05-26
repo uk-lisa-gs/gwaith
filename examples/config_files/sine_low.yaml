@@ -3,6 +3,7 @@ sine_low_band:
   stream_decimation: 2
   stream-decimation-offset: 1
   options:
-    prior-file: examples/priors/sine_priors_low.yaml
+    prior-file: file:../priors/sine_priors_low.yaml
     f-low: 1e-5
     f-high: 1e-2
+    verbose:
