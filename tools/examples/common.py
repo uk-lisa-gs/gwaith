@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import ast
 import configparser
+import math
+import operator
 from pathlib import Path
 from typing import Any
 
@@ -21,7 +24,7 @@ def load_prior_file(path: str) -> dict[str, Any]:
             raise ValueError(
                 "YAML prior file must parse to a mapping/dictionary"
             )
-        return data
+        return _normalise_numeric_expressions(data)
 
     if suffix == ".ini":
         parser = configparser.ConfigParser()
@@ -31,7 +34,7 @@ def load_prior_file(path: str) -> dict[str, Any]:
             out[section] = {
                 k: _coerce_numeric(v) for k, v in parser.items(section)
             }
-        return out
+        return _normalise_numeric_expressions(out)
 
     raise ValueError("Unsupported prior file type. Use .yaml/.yml or .ini")
 
@@ -40,6 +43,72 @@ def _coerce_numeric(value: str) -> float | str:
     try:
         return float(value)
     except ValueError:
+        return _parse_numeric_expression(value)
+
+
+def _normalise_numeric_expressions(value: Any) -> Any:
+    if isinstance(value, dict):
+        return {
+            key: _normalise_numeric_expressions(item)
+            for key, item in value.items()
+        }
+    if isinstance(value, list):
+        return [_normalise_numeric_expressions(item) for item in value]
+    if isinstance(value, str):
+        return _parse_numeric_expression(value)
+    return value
+
+
+def _parse_numeric_expression(value: str) -> float | str:
+    """Parse numeric strings, including simple expressions with pi.
+
+    Supported examples: "3.14", "pi", "-pi", "0.5*pi", "pi/2".
+    Returns original string if parsing is not possible.
+    """
+    text = value.strip()
+    if not text:
+        return value
+
+    try:
+        return float(text)
+    except ValueError:
+        pass
+
+    try:
+        node = ast.parse(text, mode="eval")
+    except SyntaxError:
+        return value
+
+    binary_ops = {
+        ast.Add: operator.add,
+        ast.Sub: operator.sub,
+        ast.Mult: operator.mul,
+        ast.Div: operator.truediv,
+    }
+
+    def _eval(expr: ast.AST) -> float:
+        if isinstance(expr, ast.Expression):
+            return _eval(expr.body)
+        if isinstance(expr, ast.Constant) and isinstance(
+            expr.value, (int, float)
+        ):
+            return float(expr.value)
+        if isinstance(expr, ast.UnaryOp) and isinstance(
+            expr.op, (ast.UAdd, ast.USub)
+        ):
+            val = _eval(expr.operand)
+            return val if isinstance(expr.op, ast.UAdd) else -val
+        if isinstance(expr, ast.BinOp) and type(expr.op) in binary_ops:
+            left = _eval(expr.left)
+            right = _eval(expr.right)
+            return float(binary_ops[type(expr.op)](left, right))
+        if isinstance(expr, ast.Name) and expr.id == "pi":
+            return float(math.pi)
+        raise ValueError("Unsupported expression")
+
+    try:
+        return _eval(node)
+    except (ValueError, ZeroDivisionError):
         return value
 
 

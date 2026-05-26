@@ -1,0 +1,8 @@
+processor:
+  options:
+    input-file: file:../example_data/example_data.hdf
+    input-dataset: data
+
+subtraction:
+  options:
+    verbose:

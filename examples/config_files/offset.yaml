@@ -1,0 +1,6 @@
+offset:
+  skip_rounds: [0]
+  stream_decimation: 3
+  options:
+    prior-file: file:../priors/offset_priors.yaml
+    verbose:

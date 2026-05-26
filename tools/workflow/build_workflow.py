@@ -47,8 +47,10 @@ def _noise_script(
     estimate_psd_cmd: str,
 ) -> tuple[Path, str]:
     round_tag = _round_tag(round_index)
-    noise_file = round_dir / f"{round_tag}_noise.h5"
-    script = round_dir / f"{round_tag}_job_noise_estimate.sh"
+    scripts_dir = round_dir / "scripts"
+    scripts_dir.mkdir(parents=True, exist_ok=True)
+    noise_file = round_dir / f"{round_tag}_noise.hdf"
+    script = scripts_dir / f"{round_tag}_job_noise_estimate.sh"
     content = _script_header() + (
         f"{estimate_psd_cmd} \\\n"
         f'  --data "{data_in}" \\\n'
@@ -73,9 +75,11 @@ def _module_script(
     priors = module.get("priors")
     signal_dataset = module.get("signal_dataset", "signal")
 
-    output_signal = round_dir / f"{round_tag}_{module_name}_signal.h5"
+    scripts_dir = round_dir / "scripts"
+    scripts_dir.mkdir(parents=True, exist_ok=True)
+    output_signal = round_dir / f"{round_tag}_{module_name}_signal.hdf"
     output_params = round_dir / f"{round_tag}_{module_name}_params.yaml"
-    script = round_dir / f"{round_tag}_job_fit_{module_name}.sh"
+    script = scripts_dir / f"{round_tag}_job_fit_{module_name}.sh"
 
     lines = [
         _script_header(),
@@ -105,8 +109,10 @@ def _subtract_script(
     signal_inputs: list[dict[str, str]],
 ) -> tuple[Path, str]:
     round_tag = _round_tag(round_index)
-    output_residual = round_dir / f"{round_tag}_combined_residual.h5"
-    script = round_dir / f"{round_tag}_job_subtract_signals.sh"
+    scripts_dir = round_dir / "scripts"
+    scripts_dir.mkdir(parents=True, exist_ok=True)
+    output_residual = round_dir / f"{round_tag}_combined_residual.hdf"
+    script = scripts_dir / f"{round_tag}_job_subtract_signals.sh"
 
     signal_files = [s["file"] for s in signal_inputs]
     signal_datasets = [s["dataset"] for s in signal_inputs]
@@ -150,8 +156,10 @@ def _per_module_input_script(
     """Create per-module input data from the other modules' signals."""
     round_tag = _round_tag(round_index)
     module_name = module["name"]
-    output_data = round_dir / f"{round_tag}_{module_name}_input_data.h5"
-    script = round_dir / f"{round_tag}_job_prep_{module_name}_data.sh"
+    scripts_dir = round_dir / "scripts"
+    scripts_dir.mkdir(parents=True, exist_ok=True)
+    output_data = round_dir / f"{round_tag}_{module_name}_input_data.hdf"
+    script = scripts_dir / f"{round_tag}_job_prep_{module_name}_data.sh"
 
     if not other_signals:
         content = _script_header() + f'cp "{base_data}" "{output_data}"\n'
@@ -225,7 +233,7 @@ def _finalize_noise_script(
     estimate_psd_cmd: str,
 ) -> tuple[Path, str]:
     script = final_dir / "finalize_job_final_noise_estimate.sh"
-    final_noise = final_dir / "final_noise_estimate.h5"
+    final_noise = final_dir / "final_noise_estimate.hdf"
 
     content = _script_header() + (
         f"{estimate_psd_cmd} \\\n"
@@ -247,8 +255,9 @@ def _master_script(
     for r in range(1, rounds + 1):
         round_tag = _round_tag(r)
         round_dir = workflow_dir / round_tag
-        noise = round_dir / f"{round_tag}_job_noise_estimate.sh"
-        subtract = round_dir / f"{round_tag}_job_subtract_signals.sh"
+        scripts_dir = round_dir / "scripts"
+        noise = scripts_dir / f"{round_tag}_job_noise_estimate.sh"
+        subtract = scripts_dir / f"{round_tag}_job_subtract_signals.sh"
 
         lines.append(f'echo "Running {round_tag} noise estimate"\n')
         lines.append(f'bash "{noise}"\n')
@@ -257,18 +266,23 @@ def _master_script(
             lines.append(
                 f'echo "Preparing per-module input data for {round_tag}"\n'
             )
+            lines.append("pids=()\n")
             for name in module_names:
-                prep = round_dir / f"{round_tag}_job_prep_{name}_data.sh"
-                lines.append(f'bash "{prep}" &\n')
-            lines.append("wait\n")
+                prep = scripts_dir / f"{round_tag}_job_prep_{name}_data.sh"
+                lines.append(f'bash "{prep}" & pids+=($!)\n')
+            lines.append("for pid in \"${pids[@]}\"; do\n")
+            lines.append("  wait $pid || exit 1\n")
+            lines.append("done\n")
 
         lines.append(f'echo "Running {round_tag} module jobs in parallel"\n')
 
+        lines.append("pids=()\n")
         for name in module_names:
-            job = round_dir / f"{round_tag}_job_fit_{name}.sh"
-            lines.append(f'bash "{job}" &\n')
-
-        lines.append("wait\n")
+            job = scripts_dir / f"{round_tag}_job_fit_{name}.sh"
+            lines.append(f'bash "{job}" & pids+=($!)\n')
+        lines.append("for pid in \"${pids[@]}\"; do\n")
+        lines.append("  wait $pid || exit 1\n")
+        lines.append("done\n")
         lines.append(f'echo "Combining residuals for {round_tag}"\n')
         lines.append(f'bash "{subtract}"\n\n')
 

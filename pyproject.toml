@@ -21,17 +21,16 @@ dependencies = [
 dev = [
   "flake8>=7.0",
   "pytest>=8.0",
-  "ruff>=0.4",
-  "mypy>=1.9",
 ]
 
 [project.scripts]
 gwaith_subtract_signals = "tools.subtraction.subtract_signals:main"
+gwaith_consolidate_params = "tools.workflow.consolidate_params:main"
 gwaith_estimate_psd = "tools.examples.estimate_psd:main"
 gwaith_fit_sine = "tools.examples.fit_sine:main"
 gwaith_fit_offset = "tools.examples.fit_offset:main"
-gwaith_build_workflow = "tools.workflow.build_workflow:main"
-gwaith_consolidate_params = "tools.workflow.consolidate_params:main"
+gwaith_fit_sine_gaussian = "tools.examples.fit_sine_gaussian:main"
+gwaith_build_example_workflow = "tools.examples.build_example_workflow:main"
 
 [tool.setuptools]
 package-dir = {"" = "src", "tools" = "tools"}

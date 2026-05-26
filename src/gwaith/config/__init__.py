@@ -1,52 +1,21 @@
 """Configuration I/O for GWAITH with format auto-detection."""
-
-from __future__ import annotations
-
 from pathlib import Path
 from typing import Any
 
-from .normalise import (
-    normalise_config,
-    normalise_workflow_config,
-)
-from .yaml_config import (
-    load_yaml_config as _load_config_yaml,
-    write_yaml_config as _write_config_yaml,
-)
+from .yaml_config import load_yaml_data
+from .types import GwaithConfig
+from .parser import GwaithConfigParser, add_config_input_options
+from .utils import safe_update, get_dict_value, resolve_match
 
 __all__ = [
-    "load_config",
-    "write_config",
-    "normalise_config",
-    "normalise_workflow_config",
+    "add_config_input_options",
+    "load_yaml_data",
+    "GwaithConfig",
+    "GwaithConfigParser",
+    "safe_update",
+    "get_dict_value",
+    "resolve_match"
 ]
-
-
-def load_config(filepath: str | Path) -> dict[str, Any]:
-    """Load a configuration file, auto-detecting format from extension.
-
-    Parameters
-    ----------
-    filepath:
-        Path to the configuration file.
-
-    Returns
-    -------
-    config:
-        Parsed configuration dictionary.
-
-    Raises
-    ------
-    ValueError:
-        If file extension is not recognized.
-    """
-    suffix = Path(filepath).suffix.lower()
-    if suffix in (".yaml", ".yml"):
-        return _load_config_yaml(filepath)
-    raise ValueError(
-        "Unsupported config format: "
-        f"{suffix!r}. Supported formats: .yaml, .yml"
-    )
 
 
 def write_config(filepath: str | Path, config: dict[str, Any]) -> None:

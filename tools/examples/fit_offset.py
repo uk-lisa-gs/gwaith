@@ -12,6 +12,8 @@ import argparse
 import logging
 from pathlib import Path
 
+import yaml
+
 from gwaith import add_gwaith_common_options, init_logging
 from gwaith.io import (
     add_data_input_args,
@@ -20,7 +22,7 @@ from gwaith.io import (
     write_timeseries,
 )
 from gwaith.types import TimeSeries
-from gwaith.tools.examples.common import (
+from .common import (
     apply_bounds,
     get_param_prior,
     load_prior_file,
@@ -29,8 +31,11 @@ from gwaith.tools.examples.common import (
 logger = logging.getLogger("gwaith.examples.fit_offset")
 
 
-def fit_offset(data_ts: TimeSeries, priors: dict) -> float:
-    """Estimate constant offset using the sample mean and optional bounds."""
+def fit_offset(data_ts: TimeSeries, priors: dict) -> tuple[float, float]:
+    """Estimate constant offset using the sample mean and optional bounds.
+
+    Returns the fitted offset and the standard deviation of the data.
+    """
     offset_prior = get_param_prior(priors, "offset")
 
     if "value" in offset_prior:
@@ -38,7 +43,9 @@ def fit_offset(data_ts: TimeSeries, priors: dict) -> float:
     else:
         estimate = float(data_ts.data.mean())
 
-    return apply_bounds(estimate, offset_prior)
+    fitted = apply_bounds(estimate, offset_prior)
+    std = float(data_ts.data.std())
+    return fitted, std
 
 
 def offset_model(ts: TimeSeries, offset: float) -> TimeSeries:
@@ -90,7 +97,7 @@ def main(argv: list[str] | None = None) -> int:
 
         prior_path = args.priors or args.init_params
         priors = load_prior_file(prior_path) if prior_path else {}
-        offset = fit_offset(data_ts, priors)
+        offset, std = fit_offset(data_ts, priors)
 
         signal_ts = offset_model(data_ts, offset)
         write_timeseries(
@@ -99,8 +106,16 @@ def main(argv: list[str] | None = None) -> int:
             args.output_signal_dataset,
         )
 
-        # Emit exactly one scalar value as requested.
-        Path(args.output_params).write_text(f"{offset}\n", encoding="utf-8")
+        # Write updated priors: mean is the fitted offset, bounds are ±2 sigma.
+        params_out = {
+            "offset": {
+                "value": float(offset),
+                "min": float(offset - 2.0 * std),
+                "max": float(offset + 2.0 * std),
+            }
+        }
+        with open(args.output_params, "w", encoding="utf-8") as f:
+            yaml.safe_dump(params_out, f, default_flow_style=False)
 
         logger.info(
             "Wrote signal to %s and parameters to %s",

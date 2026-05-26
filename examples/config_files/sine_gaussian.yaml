@@ -1,0 +1,10 @@
+sine_gaussian:
+  skip_rounds: []
+  options:
+    prior-file: file:../priors/sine_gaussian_priors.yaml
+    output-signal-dataset: signal
+    output-components-dir: components/sine_gaussian
+    verbose:
+  resources:
+    walltime: "00:20:00"
+    memory_mb: 4096
