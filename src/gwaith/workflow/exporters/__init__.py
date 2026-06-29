@@ -6,8 +6,6 @@ import os
 from pathlib import Path
 
 from .bash_exporter import GwaithBashExporter
-from .pegasus_exporter import GwaithPegasusExporter
-from .pegasus_exporter import GwaithPegasusExporter
 from .exporter import GwaithExportResult, GwaithExporter
 
 _EXPORTER_ENV_VAR = "GWAITH_EXPORTER"
@@ -22,14 +20,6 @@ def get_exporter(name: str | None = None) -> GwaithExporter:
     exporter_name = (name or os.getenv(_EXPORTER_ENV_VAR, "bash")).strip().lower()
     if exporter_name in {"bash", "shell", "default"}:
         return GwaithBashExporter()
-    elif exporter_name == "slurm":
-        return GwaithSlurmExporter()
-    elif exporter_name == "htcondor":
-        return GwaithHTCondorExporter()
-    elif exporter_name == "snakemake":
-        return GwaithSnakemakeExporter()
-    elif exporter_name == "pegasus":
-        return GwaithPegasusExporter()
     raise ValueError(f"Unknown workflow exporter: {exporter_name}")
 
 

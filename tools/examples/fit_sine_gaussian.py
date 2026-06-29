@@ -51,7 +51,7 @@ def _sine_gaussian_model(
     gaussian_envelope = amplitude * np.exp(
         -(t - central_time) ** 2 / (2 * width ** 2)
     )
-    sinusoidal = np.sin(2.0 * np.pi * frequency * t)
+    sinusoidal = np.sin(2.0 * np.pi * frequency * t + phase)
     return gaussian_envelope * sinusoidal
 
 
