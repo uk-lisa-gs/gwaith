@@ -686,6 +686,7 @@ def build_workflow(
 		config_parser, 
 		workflow_name: str | None = None,
 		workflow_dir: str | None = None,
+		exporter: str | None = None,
 ) -> GwaithWorkflow:
 	"""Build a workflow graph.
 	
@@ -697,9 +698,11 @@ def build_workflow(
 	Returns:
 		GwaithWorkflow
 	"""
-	workflow_graph = build_workflow_graph(
-		config_parser,
-		workflow_name=workflow_name,
-		workflow_dir=workflow_dir,
+	from .pegasus_generator import build_pegasus_workflow
+	cfg = _parse_config(config_parser, workflow_name=workflow_name, workflow_dir=workflow_dir)
+	pegasus_wf = build_pegasus_workflow(
+		config=config_parser,
+		workflow_name=cfg["name"],
+		workflow_dir=cfg["workflow_dir"],
 	)
-	return workflow_graph
+	return pegasus_wf
