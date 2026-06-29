@@ -47,46 +47,38 @@ def add_data_input_args(
     parser: argparse.ArgumentParser,
     *,
     data_option: str = "--data",
-    dataset_option: str = None,
     data_required: bool = True,
-    default_dataset: str = "data",
     data_help: str = "Input HDF5 data file",
-    dataset_help: str | None = None,
 ) -> argparse._ArgumentGroup:
     """Add standard data-input file and dataset CLI arguments."""
     grp = parser.add_argument_group("data input")
-    grp.add_argument(data_option, required=data_required, help=data_help)
     grp.add_argument(
-        dataset_option,
-        default=default_dataset,
-        help=(
-            dataset_help
-            or f"Dataset in {data_option} (default: {default_dataset})"
-        ),
+        "--data-file",
+        required=True,
+        help="Input HDF5 data file containing original data"
+    )
+    grp.add_argument(
+        "--data-group",
+        required=False,
+        help="Group in the data hdf5 file which contains datasets for each channel"
     )
     return grp
 
 
 def add_data_output_args(
     parser: argparse.ArgumentParser,
-    *,
-    output_option: str = "--output",
-    dataset_option: str = "--output-dataset",
-    output_required: bool = True,
-    default_dataset: str = "data",
-    output_help: str = "Output HDF5 file",
-    dataset_help: str | None = None,
 ) -> argparse._ArgumentGroup:
     """Add standard data-output file and dataset CLI arguments."""
     grp = parser.add_argument_group("data output")
-    grp.add_argument(output_option, required=output_required, help=output_help)
     grp.add_argument(
-        dataset_option,
-        default=default_dataset,
-        help=(
-            dataset_help
-            or f"Dataset in {output_option} (default: {default_dataset})"
-        ),
+        "--output-filename",
+        required=True,
+        help="Output HDF5 file"
+    )
+    grp.add_argument(
+        "--output-group",
+        required=False,
+        help="Output datasets into this group in the output hdf5 file - default is to use the file root group"
     )
     return grp
 
@@ -97,35 +89,62 @@ def add_signal_input_args(
     """Add signal-file input and signal-dataset CLI arguments."""
     grp = parser.add_argument_group("signal input")
     grp.add_argument(
-        "--signal",
+        "--signal-files",
         nargs="+",
         required=True,
         metavar="FILE",
-        help="One or more HDF5 signal files to subtract",
+        help="One or more HDF5 signal file(s) to subtract. "
+        "One file and multiple datasets (given by signal--datasets) or "
+        "the same dataset name shared over multiple files (i.e. one "
+        "filename, multiple signal-datasets values) can be used.",
     )
     grp.add_argument(
-        "--signal-dataset",
+        "--signal-groups",
         nargs="+",
-        default=None,
         metavar="DATASET",
         help=(
-            "Dataset name(s) in signal files; one per file or a single "
-            "value broadcast to all (default: 'signal')"
+            "Signal group name(s) in signal files; one per file or a single "
+            "value broadcast to file, or multiple values cast to a "
+            "single file"
         ),
     )
     return grp
 
 
-def resolve_signal_datasets(
-    parser: argparse.ArgumentParser, args: argparse.Namespace
+def resolve_filenames_datasets(
+    filenames: list[str],
+    datasets: list[str],
 ) -> list[str]:
-    """Validate and expand signal dataset args to one entry per signal file."""
-    signal_datasets = args.signal_dataset or ["signal"]
-    if len(signal_datasets) == 1:
-        return signal_datasets * len(args.signal)
-    if len(signal_datasets) != len(args.signal):
-        parser.error(
-            f"--signal-dataset count ({len(signal_datasets)}) must match "
-            f"--signal count ({len(args.signal)})"
+    """
+    Convert signal dataset name(s) and filename(s) to a list of paired
+    tuples of datasets / filenames
+
+    This function will return a list of tuples of filenames and datasets
+    This can be used as e.g. zip(*resolve_filename_datasets(filenames, dataset))
+    """
+
+    # The filenames and datasets can be any of:
+    # 1) 1 filename and N dataset names
+    # 2) 1 dataset name and N filenames
+    # 3) N filenames and N datasets
+
+    if len(filenames) == 0 or len(datasets) == 0:
+        raise ValueError(
+            "Both filenames and datasets must be provided"
         )
-    return signal_datasets
+    if len(filenames) != 1 and len(datasets) != 1:
+        if not len(datasets) == len(filenames):
+            raise ValueError(
+                "filenames and datasets must be the same length "
+                "or one must have length one"
+            )
+    
+    if len(filenames) == 1 and len(datasets) == 1:
+        return [(filenames[0], datasets[0])]
+    elif len(filenames) == 1 and len(datasets) > 1:
+        return [(filenames[0], d) for d in datasets]
+    elif len(filenames) > 1 and len(datasets) == 1:
+        return [(f, datasets[0]) for f in filenames]
+    else:
+        return list(zip(filenames, datasets))
+    

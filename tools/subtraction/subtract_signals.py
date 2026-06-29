@@ -12,7 +12,6 @@ from gwaith.io import (
     add_data_output_args,
     add_signal_input_args,
     load_timeseries,
-    resolve_signal_datasets,
     write_timeseries,
 )
 from gwaith.subtraction import subtract_signals
@@ -26,36 +25,49 @@ def main(argv: list[str] | None = None) -> int:
         prog="gwaith_subtract_signals",
         description=(
             "Subtract one or more signal HDF5 files from a data "
-            "HDF5 file."
+            "HDF5 file. The signal files must have the same structure as the data file."
         ),
     )
-    add_data_input_args(parser, data_help="Path to HDF5 data file")
+    add_data_input_args(parser)
     add_signal_input_args(parser)
-    add_data_output_args(parser, output_help="Output HDF5 file for residual")
+    add_data_output_args(parser)
+    parser.add_argument(
+        '--channels',
+        required=True,
+        help='Data channels to perform the subtraction'
+    )
     add_gwaith_common_options(parser)
 
     args = parser.parse_args(argv)
     init_logging(args.verbose)
 
     try:
-        signal_datasets = resolve_signal_datasets(parser, args)
 
-        logger.info("Loading data from %s [%s]", args.data, args.data_dataset)
-        data_ts = load_timeseries(args.data, args.data_dataset)
+        logger.info("Loading data from %s", args.data)
+        data_ts = {
+            channel: load_timeseries(args.data, dataset=channel)
+            for channel in args.channels
+        }
 
         signals = []
-        for sig_file, sig_dataset in zip(args.signal, signal_datasets):
-            logger.info("Loading signal from %s [%s]", sig_file, sig_dataset)
-            signals.append(load_timeseries(sig_file, sig_dataset))
+        for sig_file in args.signal:
+            logger.info("Loading signal from %s", sig_file)
+            signals.append({
+                channel: load_timeseries(sig_file, dataset=channel)
+                for channel in args.channels
+                }
+            )
 
-        residual = subtract_signals(data_ts, signals)
+        residual = subtract_signals(data_ts, signals, channels=args.channels)
 
         logger.info(
-            "Writing residual to %s [%s]",
+            "Writing residual to %s",
             args.output,
             args.output_dataset,
         )
-        write_timeseries(residual, args.output, args.output_dataset)
+        for channel in args.channels:
+            logger.info("Channel %s", channel)
+            write_timeseries(residual[channel], args.output, channel)
         return 0
 
     except Exception as exc:

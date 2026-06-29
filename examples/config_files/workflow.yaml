@@ -1,6 +1,7 @@
 workflow:
   rounds: 12
   global-retention-level: 2
+  channels: A
 
 executables:
   subtraction: gwaith_subtract_signals

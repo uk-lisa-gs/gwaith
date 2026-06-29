@@ -9,7 +9,6 @@ from typing import Any
 
 import yaml
 
-from .exporters import GwaithExporter, get_exporter
 from .helpers import make_file_uid, make_node_uid, register_file, register_node
 from .types import GwaithFile, GwaithNode, GwaithStream, GwaithWorkflow
 
@@ -217,10 +216,13 @@ def _parse_config(config_parser, workflow_name: str | None, workflow_dir: str | 
 		raise ValueError("processor section must be a mapping")
 	processor_options = processor_cfg.get("options", {}) or {}
 
-	input_file = processor_options.get("input-file") or processor_options.get("data-file")
-	if not input_file:
-		raise ValueError("processor.options.input-file is required")
-	input_dataset = str(processor_options.get("input-dataset", _DEFAULT_DATASET))
+	input_file = (
+		processor_options.get("input-file")
+		or processor_options.get("data-file")
+		or workflow_cfg.get("input-file")
+		or workflow_cfg.get("data-file")
+	)
+	input_dataset = str(processor_options.get("input-dataset") or _DEFAULT_DATASET)
 
 	executables = data.get("executables", {})
 	if not isinstance(executables, dict):
@@ -268,7 +270,7 @@ def _parse_config(config_parser, workflow_name: str | None, workflow_dir: str | 
 		"name": name,
 		"workflow_dir": target_dir,
 		"rounds": rounds,
-		"input_file": _as_path(input_file),
+		"input_file": _as_path(input_file) if input_file else "data.hdf",
 		"input_dataset": input_dataset,
 		"global_retention_level": workflow_cfg.get("global-retention-level"),
 		"signal_streams": signal_streams,
@@ -684,30 +686,20 @@ def build_workflow(
 		config_parser, 
 		workflow_name: str | None = None,
 		workflow_dir: str | None = None,
-		exporter: GwaithExporter | None = None,
 ) -> GwaithWorkflow:
-	"""Build a workflow graph and write output artifacts.
+	"""Build a workflow graph.
 	
 	Args:
 		config_parser: Configuration parser with workflow settings
 		workflow_name: Optional name for the workflow
 		workflow_dir: Optional output directory for the workflow
-		exporter: Exporter instance to use (defaults to environment selection)
 		
 	Returns:
-		GwaithWorkflow with manifest and master_script populated
+		GwaithWorkflow
 	"""
-	if exporter is None:
-		exporter = get_exporter()
-	
 	workflow_graph = build_workflow_graph(
 		config_parser,
 		workflow_name=workflow_name,
 		workflow_dir=workflow_dir,
 	)
-	target_dir = Path(workflow_graph.workflow_dir)
-	
-	output = exporter.export(workflow_graph, target_dir)
-	workflow_graph.manifest = output.manifest
-	workflow_graph.master_script = output.master_script
 	return workflow_graph

@@ -5,7 +5,8 @@ sine_high_band:
     prior-file: file:../priors/sine_priors_high.yaml
     f-low: ${sine_low_band|options|f-high}
     f-high: 6.0e-2
-    output-signal-dataset: signal
+    data-dataset: ${workflow|channels}
+    output-signal-dataset: ${workflow|channels}
     verbose:
   resources:
     walltime: "00:20:00"

@@ -45,6 +45,7 @@ def _sine_gaussian_model(
     amplitude: float,
     frequency: float,
     width: float = 3600.0,
+    phase: float = 0.0,
 ) -> np.ndarray:
     """Generate a sine-gaussian signal."""
     gaussian_envelope = amplitude * np.exp(
@@ -62,11 +63,12 @@ def _fit_single_instance(
     instance_priors: dict,
 ) -> dict[str, float] | None:
     """Fit a single fixed-width, zero-phase sine-gaussian instance to the residual.
+
     Returns None if fitting fails or bounds are invalid.
     Only amplitude, frequency, and central_time are fitted.
     """
     frequency_prior = get_param_prior(instance_priors, "frequency")
-    central_time_prior = get_param_prior(instance_priors, "central_time")
+    central_time_prior = get_param_prior(instance_priors, "central_time") # noqa: E501
 
     # Validate that required bounds exist
     if not all(k in central_time_prior for k in ["min", "max"]):
@@ -77,7 +79,7 @@ def _fit_single_instance(
     if "value" in frequency_prior:
         freq_fixed = float(frequency_prior["value"])
     else:
-        # If not provided, use the midpoint of min/max
+        # If not provided, use the midpoint of min/max # noqa: E501
         freq_fixed = (float(frequency_prior.get("min", 0.0)) + float(frequency_prior.get("max", 1.0))) / 2.0
 
     # Initial guess for central_time
@@ -133,6 +135,7 @@ def _fit_single_instance(
         "width": 3600.0,
         "amplitude": float(amp_fit),
         "frequency": float(freq_fixed),
+        "phase": 0.0,
     }
 
 
@@ -192,7 +195,7 @@ def fit_sine_gaussians(
             t,
             params["central_time"],
             params["amplitude"],
-            params["frequency"],
+            params["frequency"]
         )
         residual = residual - fitted_signal
         
@@ -244,6 +247,7 @@ def _build_next_round_priors(
         t0_seed = get_param_prior(seed, "central_time")
         width_seed = get_param_prior(seed, "width")
         freq_seed = get_param_prior(seed, "frequency")
+
 
         next_priors[index] = {
             "amplitude": {

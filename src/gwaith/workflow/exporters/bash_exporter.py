@@ -18,6 +18,88 @@ _DEFAULT_DATASET = "data"
 _DEFAULT_SIGNAL_DATASET = "signal"
 _DEFAULT_PSD_DATASET = "psd"
 
+_CONTROLLER_SCRIPT = r"""#!/usr/bin/env bash
+set -euo pipefail
+
+# Change to the directory containing this script so relative paths work
+cd "$(dirname "$0")"
+
+STATE_FILE="job_state.tsv"
+
+if [[ ! -f "$STATE_FILE" ]]; then
+    echo "State file $STATE_FILE missing! Please generate the workflow first."
+    exit 1
+fi
+
+TEMP_STATE=$(mktemp)
+ALL_DONE=true
+
+# Read line by line. Using || [[ -n "$uid" ]] ensures we catch the last line even if there's no trailing newline
+while IFS=$'\t' read -r uid status retries script_path || [[ -n "$uid" ]]; do
+    if [[ -z "$uid" ]]; then
+        continue
+    fi
+
+    if [[ "$status" == "DONE" ]]; then
+        printf "%s\t%s\t%s\t%s\n" "$uid" "$status" "$retries" "$script_path" >> "$TEMP_STATE"
+        continue
+    fi
+
+    if [[ "$status" == "RETRY" ]]; then
+        while [[ "$retries" -gt 0 ]]; do
+            echo "Running job: $uid (Retries left: $retries)"
+            
+            # Temporarily disable exit-on-error to handle script failure gracefully
+            set +e
+            bash "$script_path"
+            EXIT_CODE=$?
+            set -e
+
+            if [[ $EXIT_CODE -eq 0 ]]; then
+                echo "Job $uid completed successfully."
+                status="DONE"
+                break
+            else
+                retries=$((retries - 1))
+                echo "Job $uid failed with exit code $EXIT_CODE."
+                if [[ "$retries" -gt 0 ]]; then
+                    echo "Retrying..."
+                else
+                    echo "No retries left for $uid. Marking as FAILED."
+                    status="FAILED"
+                fi
+            fi
+        done
+        
+        printf "%s\t%s\t%s\t%s\n" "$uid" "$status" "$retries" "$script_path" >> "$TEMP_STATE"
+        
+        if [[ "$status" != "DONE" ]]; then
+            ALL_DONE=false
+            # Output the remaining unexecuted jobs exactly as they are in the file to the temp state
+            cat >> "$TEMP_STATE"
+            break
+        fi
+    else
+        # FAILED or other unknown status, just carry it over and stop
+        printf "%s\t%s\t%s\t%s\n" "$uid" "$status" "$retries" "$script_path" >> "$TEMP_STATE"
+        ALL_DONE=false
+        cat >> "$TEMP_STATE"
+        break
+    fi
+
+done < "$STATE_FILE"
+
+# Overwrite old state with updated states
+mv "$TEMP_STATE" "$STATE_FILE"
+
+if [[ "$ALL_DONE" == false ]]; then
+    echo "Workflow stopped. Check $STATE_FILE for details."
+    exit 1
+else
+    echo "All jobs completed successfully!"
+fi
+"""
+
 
 def _safe_name(value: str) -> str:
     return re.sub(r"[^A-Za-z0-9]+", "_", str(value)).strip("_") or "item"
@@ -165,33 +247,33 @@ class GwaithBashExporter(GwaithExporter):
         return scripts
 
     def _write_master_script(self, workflow_graph: GwaithWorkflow, workflow_dir: Path, node_scripts: dict[str, str], finalize_scripts: dict[str, str]) -> str:
-        lines = [_script_header()]
-        for entry in workflow_graph.round_entries:
-            round_tag = _round_tag(entry["round"])
-            if entry["fit_nodes"]:
-                lines.append(f'echo "Running {round_tag} fit jobs"\n')
+        state_file_path = workflow_dir / "job_state.tsv"
+        max_retries = 3
+        
+        with open(state_file_path, "w", encoding="utf-8") as state_f:
+            for entry in workflow_graph.round_entries:
                 for node_uid in entry["fit_nodes"]:
-                    lines.append(f'bash {shlex.quote(node_scripts[node_uid])} &\n')
-                lines.append("wait\n")
-            if entry["prep_nodes"]:
-                lines.append(f'echo "Preparing next-round inputs after {round_tag}"\n')
+                    rel_path = Path(node_scripts[node_uid]).relative_to(workflow_dir)
+                    state_f.write(f"{node_uid}\tRETRY\t{max_retries}\t{rel_path}\n")
                 for node_uid in entry["prep_nodes"]:
-                    lines.append(f'bash {shlex.quote(node_scripts[node_uid])} &\n')
-                lines.append("wait\n")
-            lines.append(f'echo "Computing combined residual for {round_tag}"\n')
-            lines.append(f'bash {shlex.quote(node_scripts[entry["combined_residual_node"]])}\n')
-            if entry["noise_node"]:
-                lines.append(f'echo "Estimating noise for {round_tag}"\n')
-                lines.append(f'bash {shlex.quote(node_scripts[entry["noise_node"]])}\n')
-            lines.append("\n")
+                    rel_path = Path(node_scripts[node_uid]).relative_to(workflow_dir)
+                    state_f.write(f"{node_uid}\tRETRY\t{max_retries}\t{rel_path}\n")
+                node_uid = entry["combined_residual_node"]
+                rel_path = Path(node_scripts[node_uid]).relative_to(workflow_dir)
+                state_f.write(f"{node_uid}\tRETRY\t{max_retries}\t{rel_path}\n")
+                if entry["noise_node"]:
+                    node_uid = entry["noise_node"]
+                    rel_path = Path(node_scripts[node_uid]).relative_to(workflow_dir)
+                    state_f.write(f"{node_uid}\tRETRY\t{max_retries}\t{rel_path}\n")
 
-        lines.append('echo "Finalizing workflow outputs"\n')
-        lines.append(f'bash {shlex.quote(finalize_scripts["consolidate"])}\n')
-        if "final_noise" in finalize_scripts:
-            lines.append(f'bash {shlex.quote(finalize_scripts["final_noise"])}\n')
+            rel_path = Path(finalize_scripts["consolidate"]).relative_to(workflow_dir)
+            state_f.write(f"finalize_consolidate\tRETRY\t{max_retries}\t{rel_path}\n")
+            if "final_noise" in finalize_scripts:
+                rel_path = Path(finalize_scripts["final_noise"]).relative_to(workflow_dir)
+                state_f.write(f"finalize_noise\tRETRY\t{max_retries}\t{rel_path}\n")
 
         master_path = workflow_dir / "run_workflow.sh"
-        _write_executable(master_path, "".join(lines))
+        _write_executable(master_path, _CONTROLLER_SCRIPT)
         return str(master_path)
 
     def _write_manifest(self, workflow_graph: GwaithWorkflow, workflow_dir: Path, node_scripts: dict[str, str], finalize_scripts: dict[str, str], master_script: str) -> str:

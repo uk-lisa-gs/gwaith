@@ -4,3 +4,5 @@ offset:
   options:
     prior-file: file:../priors/offset_priors.yaml
     verbose:
+    data-dataset: ${workflow|channels}
+    output-signal-dataset: ${workflow|channels}

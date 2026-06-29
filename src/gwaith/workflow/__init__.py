@@ -8,6 +8,7 @@ from .generator import (
     build_workflow,
     build_workflow_graph,
 )
+from .exporters import output_workflow
 from .types import (
     GwaithFile,
     GwaithNode,
@@ -25,6 +26,15 @@ def add_workflow_input_options(parser):
         "--workflow-dir",
         help="Path to the workflow directory, default is same as --workflow-name"
     )
+    parser.add_argument(
+        "--exporter",
+        default=None,
+        help=(
+            "Workflow exporter to use (e.g., 'bash', 'slurm', 'pegasus'). "
+            "Can also be set via GWAITH_EXPORTER environment variable. "
+            "Defaults to 'bash'."
+        ),
+    )
 
 __all__ = [
     "add_workflow_input_options",
@@ -38,4 +48,5 @@ __all__ = [
     'register_node',
     'build_workflow',
     'build_workflow_graph',
+    'output_workflow',
 ]

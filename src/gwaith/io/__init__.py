@@ -6,7 +6,6 @@ from .cli import (
     add_data_input_args,
     add_data_output_args,
     add_signal_input_args,
-    resolve_signal_datasets,
     MultiOptionAction,
     KeyValueOptionAction
 )
@@ -28,7 +27,7 @@ __all__ = [
     "add_data_input_args",
     "add_data_output_args",
     "add_signal_input_args",
-    "resolve_signal_datasets",
+    "resolve_filenames_datasets",
     "write_timeseries",
     "load_timeseries",
     "write_frequencyseries",

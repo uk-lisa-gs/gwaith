@@ -9,7 +9,9 @@ from pathlib import Path
 from typing import Any
 
 from .yaml_config import load_yaml_data
+from .ini_config import load_ini_data
 from .utils import safe_update, interpolate_dict
+from .utils import interpolate_dict
 
 logger = logging.getLogger('gwaith.config.parser')
 
@@ -106,12 +108,15 @@ class GwaithConfigParser:
 
     def read_config(self, _):
         config_dict = {}
-        for input_file, file_type in zip(self.input_files, self.file_types):
-            if file_type == "yaml":
-                safe_update(
-                    config_dict,
-                    load_yaml_data(input_file)
-                )
+        yaml_files = [f for f, t in zip(self.input_files, self.file_types) if t == 'yaml']
+        ini_files = [f for f, t in zip(self.input_files, self.file_types) if t == 'ini']
+
+        if yaml_files:
+            safe_update(config_dict, load_yaml_data(yaml_files))
+        
+        if ini_files:
+            safe_update(config_dict, load_ini_data(ini_files))
+
         return config_dict
 
     @property

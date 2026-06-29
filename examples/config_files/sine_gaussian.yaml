@@ -2,8 +2,8 @@ sine_gaussian:
   skip_rounds: []
   options:
     prior-file: file:../priors/sine_gaussian_priors.yaml
-    output-signal-dataset: signal
-    output-components-dir: components/sine_gaussian
+    data-dataset: ${workflow|channels}
+    output-signal-dataset: ${workflow|channels}
     verbose:
   resources:
     walltime: "00:20:00"

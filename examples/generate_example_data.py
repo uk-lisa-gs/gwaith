@@ -266,20 +266,21 @@ def main(argv: list[str] | None = None) -> int:
         logger.debug("Loading sine gaussian config")
         for i, wave_str in enumerate(args.sine_gaussians):
             parts = wave_str.split(':')
-            if len(parts) != 5:
+            if len(parts) != 3:
                 parser.error(
-                    f"Sine gaussian {i}: expected 'time:width:amplitude:frequency:phase' "
+                    f"Sine gaussian {i}: expected 'time:amplitude:frequency' "
                     f"but got '{wave_str}'"
                 )
             try:
                 central_time = float(parts[0])
-                width = float(parts[1])
-                amplitude = float(parts[2])
-                frequency = float(parts[3])
-                phase = float(parts[4])
+                amplitude = float(parts[1])
+                frequency = float(parts[2])
+                # Hardcoded width and phase
+                width = 3600.0
+                phase = 0.0
             except ValueError as e:
                 parser.error(
-                    f"Sine-gaussian {i}: could not parse 'time:width:amplitude:frequency:phase' "
+                    f"Sine-gaussian {i}: could not parse 'time:amplitude:frequency' "
                     f"from '{wave_str}': {e}"
                 )
             sine_gaussian_config[i] = {
