@@ -686,7 +686,6 @@ def build_workflow(
 		config_parser, 
 		workflow_name: str | None = None,
 		workflow_dir: str | None = None,
-		exporter: str | None = None,
 ) -> GwaithWorkflow:
 	"""Build a workflow graph.
 	

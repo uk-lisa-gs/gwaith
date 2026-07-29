@@ -60,7 +60,7 @@ gwaith_generate_universal_workflow \
   --output-dir examples/generated_workflow
 ```
 
-Replace `--exporter slurm` with `--exporter snakemake`, `--exporter htcondor`,
+Replace `--exporter slurm` with `--exporter snakemake`, `--exporter pegasus`,
 or `--exporter all` to target a different scheduler.
 
 This generates:

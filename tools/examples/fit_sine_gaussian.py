@@ -59,7 +59,6 @@ def _sine_gaussian_model(
 def _fit_single_instance(
     residual: np.ndarray,
     t: np.ndarray,
-    delta_t: float,
     instance_priors: dict,
 ) -> dict[str, float] | None:
     """Fit a single fixed-width, zero-phase sine-gaussian instance to the residual.

@@ -42,6 +42,7 @@ def main(argv: list[str] | None = None) -> int:
     logger.info("Workflow created in: %s", workflow.workflow_dir)
     logger.info("Manifest: %s", workflow.manifest)
     logger.info("Run with: %s", workflow.master_script)
+
     return 0
 
 

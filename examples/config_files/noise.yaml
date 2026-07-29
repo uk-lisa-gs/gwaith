@@ -1,5 +1,0 @@
-noise:
-  options:
-    verbose:
-    data-dataset: ${workflow|channels}
-    output-signal-dataset: ${workflow|channels}

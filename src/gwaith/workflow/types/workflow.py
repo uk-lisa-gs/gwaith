@@ -27,3 +27,49 @@ class GwaithWorkflow:
         self.final_params = {}
         self.manifest = None
         self.master_script = None
+
+    def from_cli(self, args):
+        """
+        Build a GwaithWorkflow object from the command line arguments.
+
+        Args:
+            args (argparse.Namespace):
+
+        Returns:
+            GwaithWorkflow:
+        """
+        
+
+    @classmethod
+    def add_input_options(parser):
+        """
+        Adds an argumnet group to an argparse ArgumentParser with the options
+        needed to define a workflow.
+
+        Args:
+            parser (argparse.ArgumentParser):
+        """
+        grp = parser.add_argument_group("Workflow options")
+        grp.add_argument(
+            "--workflow-name",
+            required=True,
+            help="Name of the workflow",
+        )
+        grp.add_argument(
+            "--workflow-dir",
+            help="Path to the workflow directory, default is same as --workflow-name"
+        )
+        grp.add_argument(
+            "--exporter",
+            default=None,
+            help=(
+                "Workflow exporter to use (e.g., 'bash', 'slurm', 'pegasus'). "
+                "Can also be set via GWAITH_EXPORTER environment variable. "
+                "Defaults to 'bash'."
+            ),
+        )
+        grp.add_argument(
+            "--submit-now",
+            action='store_true',
+            help="If given, submit the workflow"
+        )

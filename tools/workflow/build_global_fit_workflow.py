@@ -1,4 +1,4 @@
-"""Generate iterative GWAITH workflow artifacts from parsed config files."""
+"""Generate iterative GWAITH workflow using a blocked Gibbs sampling approach."""
 
 from __future__ import annotations
 
@@ -12,6 +12,8 @@ from gwaith.workflow import (
     build_workflow,
 )
 from gwaith.workflow.exporters import get_exporter, output_workflow
+from gwaith.types import GwaithFile
+
 
 logger = logging.getLogger("gwaith.tools.workflow.build_workflow")
 
@@ -27,6 +29,12 @@ def main(argv: list[str] | None = None) -> int:
 
     args = parser.parse_args(argv)
     init_logging(args.verbose)
+
+    # Also log to a file, so that the generator log can be added to the results page
+    wf_log_file = GwaithFile(
+        args.workflow_dir / f'{args.workflow_name}_workflow_generation.log'
+    )
+    init_logging(args.verbose, wf_log_file)
 
     logger.info("Loading Config")
     config_parser = GwaithConfigParser.from_cli(args)
