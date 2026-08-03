@@ -1,5 +1,5 @@
-"""Core shared data types used across GWAITH."""
+from .series import Series
+from .timeseries import TimeSeries
+from .frequencyseries import FrequencySeries
 
-from .series import FrequencySeries, TimeSeries
-
-__all__ = ["TimeSeries", "FrequencySeries"]
+__all__ = ["Series", "TimeSeries", "FrequencySeries"]

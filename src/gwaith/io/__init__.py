@@ -1,6 +1,7 @@
 """GWAITH I/O: file format dispatcher for series save/load methods."""
 
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from .cli import (
     add_data_input_args,
@@ -15,6 +16,10 @@ from .hdf5 import (
     write_frequencyseries as write_frequencyseries_hdf5,
     write_timeseries as write_timeseries_hdf5,
 )
+
+if TYPE_CHECKING:
+    from gwaith.types import TimeSeries, FrequencySeries
+
 
 
 from .mojito import (
@@ -66,7 +71,7 @@ def get_format_from_filename(filepath: str) -> str:
     )
 
 
-def write_timeseries(ts, filepath: str, dataset_name: str = "data") -> None:
+def write_timeseries(ts: TimeSeries, filepath: str, dataset_name: str | None = None) -> None:
     """Write a TimeSeries to file, auto-detecting format from extension.
 
     Parameters
@@ -85,7 +90,7 @@ def write_timeseries(ts, filepath: str, dataset_name: str = "data") -> None:
         raise ValueError(f"Unknown format: {fmt}")
 
 
-def load_timeseries(filepath: str, dataset_name: str = "data"):
+def load_timeseries(filepath: str, dataset_name: str | None = None) -> TimeSeries:
     """Load a TimeSeries from file, auto-detecting format from extension.
 
     Parameters
@@ -108,7 +113,7 @@ def load_timeseries(filepath: str, dataset_name: str = "data"):
 
 
 def write_frequencyseries(
-    series, filepath: str, dataset_name: str = "psd", **attrs
+    series: FrequencySeries, filepath: str, dataset_name: str | None = None, **attrs
 ) -> None:
     """Write a FrequencySeries to file, auto-detecting format from extension.
 
@@ -130,7 +135,7 @@ def write_frequencyseries(
         raise ValueError(f"Unknown format: {fmt}")
 
 
-def load_frequencyseries(filepath: str, dataset_name: str = "psd"):
+def load_frequencyseries(filepath: str, dataset_name: str | None = None) -> FrequencySeries:
     """Load a FrequencySeries from file, auto-detecting format from extension.
 
     Parameters
