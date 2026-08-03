@@ -7,8 +7,147 @@ from typing import Any, Union
 import numpy as np
 import numpy.fft as fft
 
+class Series:
+    """A base class for series data."""
 
-class TimeSeries:
+    def __init__(self, data: np.ndarray) -> None:
+        self.data = np.asarray(data)
+
+    @property
+    def dtype(self) -> np.dtype:
+        """The data type of the underlying data."""
+        return self.data.dtype
+
+    def __len__(self) -> int:
+        """The number of samples in the series data."""
+        return len(self.data)
+
+    def _check_compatible(self, other: Series) -> None:
+        if len(self) != len(other):
+            raise ValueError(f"length mismatch: {len(self)} != {len(other)}")
+
+    def _new_from_data(self, data: np.ndarray) -> Series:
+        """Create a new series of the same type with new data."""
+        new_obj = self.__class__.__new__(self.__class__)
+        new_obj.__dict__.update(self.__dict__)
+        new_obj.data = np.asarray(data)
+        return new_obj
+
+    def __add__(self, other: Series) -> Series:
+        self._check_compatible(other)
+        return self._new_from_data(self.data + other.data)
+
+    def __radd__(self, other: Series) -> Series:
+        if other == 0:
+            return self
+        if isinstance(other, Series):
+            return self.__add__(other)
+        return NotImplemented
+
+    def __sub__(self, other: Series) -> Series:
+        self._check_compatible(other)
+        return self._new_from_data(self.data - other.data)
+
+    def __rsub__(self, other: Union[float, int, Series]) -> Series:
+        if isinstance(other, (float, int)):
+            return self._new_from_data(other - self.data)
+        elif isinstance(other, Series):
+            other._check_compatible(self)
+            return other._new_from_data(other.data - self.data)
+        return NotImplemented
+
+    def __getitem__(self, key: Union[int, slice]) -> Any:
+        return self.data[key]
+
+    def __setitem__(self, key: Union[int, slice], value: Any) -> None:
+        self.data[key] = value
+
+    def __iadd__(self, other: Series) -> Series:
+        self._check_compatible(other)
+        self.data += other.data
+        return self
+
+    def __mul__(self, other: Union[float, int, Series]) -> Series:
+        if isinstance(other, (float, int)):
+            return self._new_from_data(self.data * other)
+        elif isinstance(other, Series):
+            self._check_compatible(other)
+            return self._new_from_data(self.data * other.data)
+        return NotImplemented
+    
+    def __rmul__(self, other: Union[float, int, Series]) -> Series:
+        return self.__mul__(other)
+
+    def __truediv__(self, other: Union[float, int, Series]) -> Series:
+        if isinstance(other, (float, int)):
+            return self._new_from_data(self.data / other)
+        elif isinstance(other, Series):
+            self._check_compatible(other)
+            return self._new_from_data(self.data / other.data)
+        return NotImplemented
+
+    def __rtruediv__(self, other: Union[float, int, Series]) -> Series:
+        if isinstance(other, (float, int)):
+            return self._new_from_data(other / self.data)
+        elif isinstance(other, Series):
+            other._check_compatible(self)
+            return other._new_from_data(other.data / self.data)
+        return NotImplemented
+
+    def __pow__(self, other: Union[float, int, Series]) -> "Series":
+        if isinstance(other, (float, int)):
+            return self._new_from_data(self.data**other)
+        elif isinstance(other, Series):
+            self._check_compatible(other)
+            return self._new_from_data(self.data**other.data)
+        return NotImplemented
+
+    def __rpow__(self, other: Union[float, int, Series]) -> "Series":
+        if isinstance(other, (float, int)):
+            return self._new_from_data(other**self.data)
+        elif isinstance(other, Series):
+            other._check_compatible(self)
+            return other._new_from_data(other.data**self.data)
+        return NotImplemented
+
+    def resize(self, new_size: int) -> None:
+        """Resizes the data array."""
+        self.data.resize(new_size, refcheck=False)
+
+    def real(self) -> Series:
+        """Returns the real part of the series."""
+        return self._new_from_data(np.real(self.data))
+
+    def imag(self) -> Series:
+        """Returns the imaginary part of the series."""
+        return self._new_from_data(np.imag(self.data))
+
+    def conj(self) -> "Series":
+        """Returns the complex conjugate of the series."""
+        return self._new_from_data(np.conj(self.data))
+
+    def astype(self, dtype: np.dtype) -> "Series":
+        """Casts the series to a specified type."""
+        return self._new_from_data(self.data.astype(dtype))
+
+    def abs(self) -> "Series":
+        """Returns a new Series with the absolute values of the data."""
+        return self._new_from_data(np.abs(self.data))
+
+    def max(self) -> float:
+        """Returns the maximum value of the data."""
+        return self.data.max()
+
+    def sum(self) -> float:
+        """Returns the sum of the data."""
+        return self.data.sum()
+
+    def min(self) -> float:
+        """Returns the minimum value of the data."""
+        return self.data.min()
+
+
+class TimeSeries(Series):
     """A uniformly-sampled timeseries with GPS metadata.
     Parameters
     ----------
@@ -21,7 +160,7 @@ class TimeSeries:
     """
 
     def __init__(self, data: np.ndarray, epoch: float, delta_t: float) -> None:
-        self.data = np.asarray(data)
+        super().__init__(data)
         self.epoch = float(epoch)
         self.delta_t = float(delta_t)
 
@@ -30,11 +169,6 @@ class TimeSeries:
         """The sample times of the TimeSeries."""
         return self.epoch + np.arange(len(self.data)) * self.delta_t
 
-    @property
-    def dtype(self) -> np.dtype:
-        """The data type of the underlying data."""
-        return self.data.dtype
-
     def __repr__(self) -> str:
         return (
             f"TimeSeries(epoch={self.epoch}, delta_t={self.delta_t}, "
@@ -42,64 +176,28 @@ class TimeSeries:
         )
 
     def _check_compatible(self, other: TimeSeries) -> None:
+        super()._check_compatible(other)
         if self.epoch != other.epoch:
             raise ValueError(f"epoch mismatch: {self.epoch} != {other.epoch}")
         if self.delta_t != other.delta_t:
             raise ValueError(
                 f"delta_t mismatch: {self.delta_t} != {other.delta_t}"
             )
-        if len(self) != len(other):
-            raise ValueError(f"length mismatch: {len(self)} != {len(other)}")
 
-    def __add__(self, other: TimeSeries) -> TimeSeries:
-        self._check_compatible(other)
-        return TimeSeries(self.data + other.data, self.epoch, self.delta_t)
-
-    def __radd__(self, other: TimeSeries) -> TimeSeries:
-        return self.__add__(other)
-
-    def __sub__(self, other: TimeSeries) -> TimeSeries:
-        self._check_compatible(other)
-        return TimeSeries(self.data - other.data, self.epoch, self.delta_t)
-
-    def __rsub__(self, other: TimeSeries) -> TimeSeries:
-        if isinstance(other, TimeSeries):
-            other._check_compatible(self)
-            return TimeSeries(
-                other.data - self.data,
-                self.epoch,
-                self.delta_t,
-            )
-        return NotImplemented
-
-    def __len__(self) -> int:
-        return len(self.data)
-
-    def __getitem__(self, key: Union[int, slice]) -> Any:
-        return self.data[key]
-
-    def __setitem__(self, key: Union[int, slice], value: Any) -> None:
-        self.data[key] = value
-
-    def __iadd__(self, other: TimeSeries) -> TimeSeries:
-        self._check_compatible(other)
-        self.data += other.data
-        return self
-
-    def __mul__(self, other: Union[float, int, TimeSeries]) -> TimeSeries:
-        if isinstance(other, (float, int)):
-            return TimeSeries(self.data * other, self.epoch, self.delta_t)
-        if isinstance(other, TimeSeries):
-            self._check_compatible(other)
-            return TimeSeries(self.data * other.data, self.epoch, self.delta_t)
-        return NotImplemented
+    def to_timeseries(self) -> "TimeSeries":
+        """Returns a copy of the timeseries."""
+        return TimeSeries(self.data, self.epoch, self.delta_t)
 
     def to_frequencyseries(self) -> "FrequencySeries":
         """Computes the Fourier transform of the timeseries."""
         n = len(self.data)
         freq_data = fft.rfft(self.data)
-        frequencies = fft.rfftfreq(n, d=self.delta_t)
-        return FrequencySeries(freq_data, frequencies, self.epoch, self.delta_t)
+        f0 = 0.0
+        delta_f = 1.0 / (n * self.delta_t)
+        fs = FrequencySeries(freq_data, f0=f0, delta_f=delta_f)
+        # Stash epoch for round-tripping
+        fs.epoch = self.epoch
+        return fs
 
     def psd(self, segment_duration: float) -> "FrequencySeries":
         """
@@ -126,19 +224,17 @@ class TimeSeries:
             psds.append(psd)
 
         avg_psd = np.mean(psds, axis=0)
-        frequencies = fft.rfftfreq(segment_length, d=self.delta_t)
-        
+        f0 = 0.0
+        delta_f = 1.0 / (segment_length * self.delta_t)
+
         # Normalise
         # Hanning window squared and summed
         win_norm = np.sum(np.hanning(segment_length)**2)
         avg_psd *= 2 / (win_norm * (1/self.delta_t))
 
-
-        return FrequencySeries(avg_psd, frequencies, self.epoch, self.delta_t)
-
-    def resize(self, new_size: int) -> None:
-        """Resizes the timeseries data array."""
-        self.data.resize(new_size, refcheck=False)
+        fs = FrequencySeries(avg_psd, f0=f0, delta_f=delta_f)
+        fs.epoch = self.epoch  # Stash epoch
+        return fs
 
     def cyclic_time_shift(self, seconds: float) -> "TimeSeries":
         """Cyclically shifts the timeseries by a given number of seconds."""
@@ -146,162 +242,77 @@ class TimeSeries:
         shifted_data = np.roll(self.data, shift)
         return TimeSeries(shifted_data, self.epoch, self.delta_t)
 
-    def real(self) -> "TimeSeries":
-        """Returns the real part of the timeseries."""
-        return TimeSeries(np.real(self.data), self.epoch, self.delta_t)
 
-
-class FrequencySeries:
+class FrequencySeries(Series):
     """A frequency-domain series with GPS metadata.
     Parameters
     ----------
     data:
         Values at each frequency bin (e.g. PSD).
-    frequencies:
-        Frequency values corresponding to each bin (Hz).
-    epoch:
-        GPS start time of the parent timeseries (seconds).
-    delta_t:
-        Sample spacing of the parent timeseries (seconds).
+    f0:
+        Frequency of the first bin (Hz).
+    delta_f:
+        Frequency bin spacing (Hz).
     """
 
     def __init__(
         self,
         data: np.ndarray,
-        frequencies: np.ndarray,
-        epoch: float,
-        delta_t: float,
+        f0: float,
+        delta_f: float,
     ) -> None:
-        self.data = np.asarray(data)
-        self.frequencies = np.asarray(frequencies)
-        self.epoch = float(epoch)
-        self.delta_t = float(delta_t)
+        super().__init__(data)
+        self.f0 = float(f0)
+        self.delta_f = float(delta_f)
 
     @property
     def sample_frequencies(self) -> np.ndarray:
         """Returns the frequency values."""
         return self.frequencies
 
-    @property
-    def dtype(self) -> np.dtype:
-        """The data type of the underlying data."""
-        return self.data.dtype
-
     def __repr__(self) -> str:
         return (
-            f"FrequencySeries(epoch={self.epoch}, delta_t={self.delta_t}, "
-            f"delta_f={self.delta_f:.6g}, n_bins={len(self.data)})"
+            f"FrequencySeries(f0={self.f0}, delta_f={self.delta_f}, "
+            f"n_bins={len(self.data)})"
         )
 
     @property
-    def delta_f(self) -> float:
-        """Frequency bin spacing (Hz).
-        Derived from the ``frequencies`` array.
-        """
-        if len(self.frequencies) < 2:
-            return 1 / (2 * self.delta_t * (len(self.data)-1)) if len(self.data) > 1 else 0
-
-        return float(self.frequencies[1] - self.frequencies[0])
+    def frequencies(self) -> np.ndarray:
+        """Frequency values for each bin (Hz)."""
+        return self.f0 + np.arange(len(self)) * self.delta_f
 
     def _check_compatible(self, other: FrequencySeries) -> None:
+        super()._check_compatible(other)
+        if self.f0 != other.f0:
+            raise ValueError(f"f0 mismatch: {self.f0} != {other.f0}")
         if self.delta_f != other.delta_f:
             raise ValueError(
                 f"delta_f mismatch: {self.delta_f} != {other.delta_f}"
             )
 
-    def __mul__(self, other: Union[float, int, "FrequencySeries"]) -> "FrequencySeries":
-        if isinstance(other, (float, int)):
-            return FrequencySeries(self.data * other, self.frequencies, self.epoch, self.delta_t)
-        if isinstance(other, FrequencySeries):
-            self._check_compatible(other)
-            return FrequencySeries(
-                self.data * other.data, self.frequencies, self.epoch, self.delta_t
-            )
-        return NotImplemented
-
-    def __rmul__(self, other: FrequencySeries) -> FrequencySeries:
-        return self.__mul__(other)
-
-    def __truediv__(self, other: Union[float, int, "FrequencySeries"]) -> "FrequencySeries":
-        if isinstance(other, (float, int)):
-            return FrequencySeries(self.data / other, self.frequencies, self.epoch, self.delta_t)
-        if isinstance(other, FrequencySeries):
-            self._check_compatible(other)
-            return FrequencySeries(
-                self.data / other.data, self.frequencies, self.epoch, self.delta_t
-            )
-        return NotImplemented
-
-    def __rtruediv__(self, other: FrequencySeries) -> FrequencySeries:
-        if isinstance(other, FrequencySeries):
-            other._check_compatible(self)
-            return FrequencySeries(
-                other.data / self.data,
-                self.frequencies,
-                self.epoch,
-                self.delta_t,
-            )
-        return NotImplemented
-
-    def __len__(self) -> int:
-        return len(self.data)
-
-    def __getitem__(self, key: Union[int, slice]) -> Any:
-        return self.data[key]
-
-    def __setitem__(self, key: Union[int, slice], value: Any) -> None:
-        self.data[key] = value
-
-    def __pow__(self, power: float) -> "FrequencySeries":
-        return FrequencySeries(
-            self.data**power, self.frequencies, self.epoch, self.delta_t
-        )
-
     def to_timeseries(self, delta_t: float = None) -> "TimeSeries":
         """Computes the inverse Fourier transform of the frequencyseries."""
-        if delta_t is None:
-            delta_t = self.delta_t
-        
         n = (len(self.data) - 1) * 2
+        if delta_t is None:
+            # This is only valid if the frequency series was created from a
+            # timeseries of length n.
+            if self.delta_f == 0:
+                raise ValueError("Cannot determine delta_t from delta_f=0")
+            delta_t = 1 / (n * self.delta_f)
+
         ts_data = fft.irfft(self.data, n=n)
-        return TimeSeries(ts_data, self.epoch, delta_t)
+        # Epoch is lost in this conversion unless it's stored explicitly.
+        # For now, we assume an epoch of 0. A more robust solution might be
+        # to carry epoch as optional metadata.
+        epoch = getattr(self, "epoch", 0)
+        return TimeSeries(ts_data, epoch, delta_t)
 
     def save(self, filename: str) -> None:
         """Saves the frequency series data to a file."""
-        np.savez(filename, data=self.data, frequencies=self.frequencies, epoch=self.epoch, delta_t=self.delta_t)
+        np.savez(filename, data=self.data, f0=self.f0, delta_f=self.delta_f)
 
     def cyclic_time_shift(self, seconds: float) -> "FrequencySeries":
         """Cyclically shifts the frequencyseries by a given number of seconds."""
         phase_shift = np.exp(2j * np.pi * self.frequencies * seconds)
         shifted_data = self.data * phase_shift
-        return FrequencySeries(shifted_data, self.frequencies, self.epoch, self.delta_t)
-
-    def conj(self) -> "FrequencySeries":
-        """Returns the complex conjugate of the frequencyseries."""
-        return FrequencySeries(np.conj(self.data), self.frequencies, self.epoch, self.delta_t)
-
-    def resize(self, new_size: int) -> None:
-        """Resizes the frequency series data array."""
-        self.data.resize(new_size, refcheck=False)
-        self.frequencies.resize(new_size, refcheck=False)
-
-
-    def astype(self, dtype: np.dtype) -> "FrequencySeries":
-        """Casts the frequencyseries to a specified type."""
-        return FrequencySeries(self.data.astype(dtype), self.frequencies, self.epoch, self.delta_t)
-
-    def abs(self) -> "FrequencySeries":
-        """Returns a new FrequencySeries with the absolute values of the data."""
-        return FrequencySeries(np.abs(self.data), self.frequencies, self.epoch, self.delta_t)
-
-    def max(self) -> float:
-        """Returns the maximum value of the data."""
-        return self.data.max()
-
-    def sum(self) -> float:
-        """Returns the sum of the data."""
-        return self.data.sum()
-
-    def min(self) -> float:
-        """Returns the minimum value of the data."""
-        return self.data.min()
+        return self._new_from_data(shifted_data)
