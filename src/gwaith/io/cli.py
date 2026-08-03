@@ -4,12 +4,50 @@ from __future__ import annotations
 
 import argparse
 
+def parse_key_value_tokens(parser, option_string, values):
+    tokens = values if isinstance(values, list) else [values]
+    out = {}
+    for token in tokens:
+        if ':' not in token:
+            parser.error(f'{option_string} mixed values are not allowed; use all key:value pairs')
+        key, value = token.split(':', 1)
+        key = key.strip()
+        value = value.strip()
+        if not key:
+            parser.error(f"{option_string} has an empty key in '{token}'")
+        if key in out:
+            parser.error(f"{option_string} has duplicate key '{key}'")
+        out[key] = value
+    return out
+
+
+class MultiOptionAction(argparse.Action):
+    def __call__(self, parser, namespace, values, option_string=None):
+        tokens = values if isinstance(values, list) else [values]
+        has_mapping = any(':' in token for token in tokens)
+
+        if not has_mapping:
+            if len(tokens) != 1:
+                parser.error(f'{option_string} expects either one value or key:value pairs')
+            setattr(namespace, self.dest, tokens[0])
+            return
+
+        setattr(namespace, self.dest, parse_key_value_tokens(parser, option_string, tokens))
+
+
+class KeyValueOptionAction(argparse.Action):
+    def __call__(self, parser, namespace, values, option_string=None):
+        tokens = values if isinstance(values, list) else [values]
+        if not any(':' in token for token in tokens):
+            parser.error(f'{option_string} requires key:value pairs')
+        setattr(namespace, self.dest, parse_key_value_tokens(parser, option_string, tokens))
+
 
 def add_data_input_args(
     parser: argparse.ArgumentParser,
     *,
     data_option: str = "--data",
-    dataset_option: str = "--data-dataset",
+    dataset_option: str = None,
     data_required: bool = True,
     default_dataset: str = "data",
     data_help: str = "Input HDF5 data file",

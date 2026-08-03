@@ -1,0 +1,13 @@
+sine_high_band:
+  skip_rounds: [0]
+  stream_decimation: 2
+  options:
+    prior-file: file:../priors/sine_priors_high.yaml
+    f-low: ${sine_low_band|options|f-high}
+    f-high: 6.0e-2
+    data-dataset: ${workflow|channels}
+    output-signal-dataset: ${workflow|channels}
+    verbose:
+  resources:
+    walltime: "00:20:00"
+    memory_mb: 4096
