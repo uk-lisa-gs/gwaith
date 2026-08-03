@@ -39,7 +39,7 @@ class Series:
     def __radd__(self, other: Series) -> Series:
         if other == 0:
             return self
-        if isinstance(other, Series):
+        if isinstance(other, self.__class__):
             return self.__add__(other)
         return NotImplemented
 
@@ -50,7 +50,7 @@ class Series:
     def __rsub__(self, other: Union[float, int, Series]) -> Series:
         if isinstance(other, (float, int)):
             return self._new_from_data(other - self.data)
-        elif isinstance(other, Series):
+        elif isinstance(other, self.__class__):
             other._check_compatible(self)
             return other._new_from_data(other.data - self.data)
         return NotImplemented
@@ -69,7 +69,7 @@ class Series:
     def __mul__(self, other: Union[float, int, Series]) -> Series:
         if isinstance(other, (float, int)):
             return self._new_from_data(self.data * other)
-        elif isinstance(other, Series):
+        elif isinstance(other, self.__class__):
             self._check_compatible(other)
             return self._new_from_data(self.data * other.data)
         return NotImplemented
@@ -80,7 +80,7 @@ class Series:
     def __truediv__(self, other: Union[float, int, Series]) -> Series:
         if isinstance(other, (float, int)):
             return self._new_from_data(self.data / other)
-        elif isinstance(other, Series):
+        elif isinstance(other, self.__class__):
             self._check_compatible(other)
             return self._new_from_data(self.data / other.data)
         return NotImplemented
@@ -88,7 +88,7 @@ class Series:
     def __rtruediv__(self, other: Union[float, int, Series]) -> Series:
         if isinstance(other, (float, int)):
             return self._new_from_data(other / self.data)
-        elif isinstance(other, Series):
+        elif isinstance(other, self.__class__):
             other._check_compatible(self)
             return other._new_from_data(other.data / self.data)
         return NotImplemented
@@ -96,7 +96,7 @@ class Series:
     def __pow__(self, other: Union[float, int, Series]) -> "Series":
         if isinstance(other, (float, int)):
             return self._new_from_data(self.data**other)
-        elif isinstance(other, Series):
+        elif isinstance(other, self.__class__):
             self._check_compatible(other)
             return self._new_from_data(self.data**other.data)
         return NotImplemented
@@ -104,7 +104,7 @@ class Series:
     def __rpow__(self, other: Union[float, int, Series]) -> "Series":
         if isinstance(other, (float, int)):
             return self._new_from_data(other**self.data)
-        elif isinstance(other, Series):
+        elif isinstance(other, self.__class__):
             other._check_compatible(self)
             return other._new_from_data(other.data**self.data)
         return NotImplemented
