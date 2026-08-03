@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 import numpy.fft as fft
+import h5py
 
 from .series import Series
 
@@ -108,12 +109,41 @@ class TimeSeries(Series):
         return TimeSeries(shifted_data, self.epoch, self.delta_t)
 
     def save(self, filepath: str, dataset_name: str | None = None) -> None:
-        """Write a TimeSeries to file, auto-detecting format from extension."""
-        from gwaith.io import write_timeseries
-        write_timeseries(self, filepath, dataset_name)
+        """Write a TimeSeries to an HDF5 file.
+
+        Parameters
+        ----------
+        filepath : str
+            Path to the HDF5 file.
+        dataset_name : str or None, optional
+            Name of the group to save the TimeSeries into within the file.
+            If None, defaults to 'timeseries'.
+        """
+        name = "timeseries" if dataset_name is None else dataset_name
+        with h5py.File(filepath, "a") as f:
+            if name in f:
+                del f[name]
+            group = f.create_group(name)
+            group.create_dataset("data", data=self.data)
+            group.attrs["epoch"] = self.epoch
+            group.attrs["delta_t"] = self.delta_t
 
     @classmethod
     def load(cls, filepath: str, dataset_name: str | None = None) -> "TimeSeries":
-        """Load a TimeSeries from file, auto-detecting format from extension."""
-        from gwaith.io import load_timeseries
-        return load_timeseries(filepath, dataset_name)
+        """Load a TimeSeries from an HDF5 file.
+
+        Parameters
+        ----------
+        filepath : str
+            Path to the HDF5 file.
+        dataset_name : str or None, optional
+            Name of the group to load the TimeSeries from within the file.
+            If None, defaults to 'timeseries'.
+        """
+        name = "timeseries" if dataset_name is None else dataset_name
+        with h5py.File(filepath, "r") as f:
+            group = f[name]
+            data = group["data"][:]
+            epoch = group.attrs["epoch"]
+            delta_t = group.attrs["delta_t"]
+        return cls(data, epoch, delta_t)

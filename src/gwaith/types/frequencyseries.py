@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 import numpy.fft as fft
+import h5py
 
 from .series import Series
 
@@ -85,13 +86,45 @@ class FrequencySeries(Series):
         shifted_data = self.data * phase_shift
         return self._new_from_data(shifted_data)
 
-    def save(self, filepath: str, dataset_name: str | None = None, **attrs) -> None:
-        """Write a FrequencySeries to file, auto-detecting format from extension."""
-        from gwaith.io import write_frequencyseries
-        write_frequencyseries(self, filepath, dataset_name, **attrs)
+    def save(self, filepath: str, dataset_name: str | None = None) -> None:
+        """Write a FrequencySeries to an HDF5 file.
+
+        Parameters
+        ----------
+        filepath : str
+            Path to the HDF5 file.
+        dataset_name : str or None, optional
+            Name of the group to save the FrequencySeries into within the file.
+            If None, defaults to 'frequencyseries'.
+        """
+        name = "frequencyseries" if dataset_name is None else dataset_name
+        with h5py.File(filepath, "a") as f:
+            if name in f:
+                del f[name]
+            group = f.create_group(name)
+            group.create_dataset("data", data=self.data)
+            group.attrs["f0"] = self.f0
+            group.attrs["delta_f"] = self.delta_f
+            if hasattr(self, "epoch"):
+                group.attrs["epoch"] = self.epoch
 
     @classmethod
     def load(cls, filepath: str, dataset_name: str | None = None) -> "FrequencySeries":
-        """Load a FrequencySeries from file, auto-detecting format from extension."""
-        from gwaith.io import load_frequencyseries
-        return load_frequencyseries(filepath, dataset_name)
+        """Load a FrequencySeries from an HDF5 file.
+
+        Parameters
+        ----------
+        filepath : str
+            Path to the HDF5 file.
+        dataset_name : str or None, optional
+            Name of the group to load the FrequencySeries from within the file.
+            If None, defaults to 'frequencyseries'.
+        """
+        name = "frequencyseries" if dataset_name is None else dataset_name
+        with h5py.File(filepath, "r") as f:
+            group = f[name]
+            data = group["data"][:]
+            f0 = group.attrs["f0"]
+            delta_f = group.attrs["delta_f"]
+            epoch = group.attrs.get("epoch")
+        return cls(data, delta_f=delta_f, f0=f0, epoch=epoch)
