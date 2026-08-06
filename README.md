@@ -1,6 +1,5 @@
 ![GWAITH logo](logo/gwaith_name.png)
 
-## Development Status
 [![Coverage](https://github.com/uk-lisa-gs/gwaith/actions/workflows/coverage.yml/badge.svg)](https://github.com/uk-lisa-gs/GWAITH/actions/workflows/coverage.yml)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/github/license/uk-lisa-gs/gwaith)](LICENSE)
