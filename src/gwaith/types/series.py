@@ -144,3 +144,7 @@ class Series:
     def min(self) -> float:
         """Returns the minimum value of the data."""
         return self.data.min()
+
+    def copy(self) -> "Series":
+        """Returns a copy of the data."""
+        return self._new_from_data(self.data.copy())
