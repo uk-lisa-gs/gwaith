@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import numpy as np
+from typing import Any, Union
 import numpy.fft as fft
 import h5py
 
@@ -39,6 +39,18 @@ class TimeSeries(Series):
             f"TimeSeries(epoch={self.epoch}, delta_t={self.delta_t}, "
             f"n_samples={len(self.data)})"
         )
+
+    def __getitem__(self, key: Union[int, slice]) -> Union[Any, "TimeSeries"]:
+        if isinstance(key, int):
+            return self.data[key]
+        elif isinstance(key, slice):
+            start, _, step = key.indices(len(self.data))
+            new_data = self.data[key]
+            new_epoch = self.epoch + start * self.delta_t
+            new_delta_t = self.delta_t * (step if step is not None else 1)
+            return TimeSeries(new_data, new_epoch, new_delta_t)
+        else:
+            raise TypeError(f"Invalid key type: {type(key)}")
 
     def _check_compatible(self, other: TimeSeries) -> None:
         super()._check_compatible(other)

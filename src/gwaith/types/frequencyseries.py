@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from typing import Any, Union
 import numpy as np
 import numpy.fft as fft
 import h5py
@@ -49,6 +50,19 @@ class FrequencySeries(Series):
             f"FrequencySeries(f0={self.f0}, delta_f={self.delta_f}, "
             f"n_bins={len(self.data)})"
         )
+
+    def __getitem__(self, key: Union[int, slice]) -> Union[Any, "FrequencySeries"]:
+        if isinstance(key, int):
+            return self.data[key]
+        elif isinstance(key, slice):
+            start, _, step = key.indices(len(self.data))
+            new_data = self.data[key]
+            new_f0 = self.f0 + start * self.delta_f
+            new_delta_f = self.delta_f * (step if step is not None else 1)
+            epoch = getattr(self, "epoch", None)
+            return FrequencySeries(new_data, delta_f=new_delta_f, f0=new_f0, epoch=epoch)
+        else:
+            raise TypeError(f"Invalid key type: {type(key)}")
 
     @property
     def frequencies(self) -> np.ndarray:
