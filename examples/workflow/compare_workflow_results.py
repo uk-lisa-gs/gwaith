@@ -67,7 +67,9 @@ def compare_results(truth_path, workflow_path):
         )
         all_passed = False
     else:
-        for i, (truth_w, est_w) in enumerate(zip(truth_waves, estimated_waves)):
+        for i, (truth_w, est_w) in enumerate(
+            zip(truth_waves, estimated_waves, strict=True)
+        ):
             logger.info(f"Wave {i} (ID={truth_w['identifier']}):")
             passed, msg = compare_scalars(
                 truth_w["amplitude"],

@@ -98,7 +98,6 @@ def test_timeseries_to_frequencyseries():
 def test_timeseries_psd():
     # Create a simple time series with a known frequency component
     delta_t = 0.01
-    sampling_rate = 1 / delta_t
     t = np.arange(0, 10, delta_t)  # 10 seconds of data
     frequency = 5.0  # Hz
     data = np.sin(2 * np.pi * frequency * t) + np.random.normal(0, 0.1, len(t))

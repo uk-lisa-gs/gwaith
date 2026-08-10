@@ -9,7 +9,7 @@ from typing import Any
 logger = logging.getLogger("gwaith.config.ini")
 
 
-def load_ini_data(paths: str | Path | Sequence[str | Path]) -> dict[str, Any]:
+def _load_ini_data(paths: str | Path | Sequence[str | Path]) -> dict[str, Any]:
     """Load INI config file(s) and consolidate them into a single dictionary."""
     if isinstance(paths, (str, Path)):
         paths = [paths]
@@ -32,4 +32,18 @@ def load_ini_data(paths: str | Path | Sequence[str | Path]) -> dict[str, Any]:
     return config
 
 
-__all__ = ["load_ini_data"]
+def _write_ini_data(data: dict[str, Any], output_path: str | Path) -> None:
+    """Write config data to an INI file."""
+    parser = ConfigParser()
+    for section, section_data in data.items():
+        parser.add_section(section)
+        for key, value in section_data.items():
+            parser.set(section, str(key), str(value))
+
+    p = Path(output_path)
+    logger.info(f"Writing INI Config to: {p}")
+    with p.open("w", encoding="utf-8") as f:
+        parser.write(f)
+
+
+__all__ = ["_load_ini_data", "_write_ini_data"]

@@ -110,9 +110,15 @@ class GwaithConfigParser:
     def read_config(self, _):
         config_dict = {}
         yaml_files = [
-            f for f, t in zip(self.input_files, self.file_types) if t == "yaml"
+            f
+            for f, t in zip(self.input_files, self.file_types, strict=True)
+            if t == "yaml"
         ]
-        ini_files = [f for f, t in zip(self.input_files, self.file_types) if t == "ini"]
+        ini_files = [
+            f
+            for f, t in zip(self.input_files, self.file_types, strict=True)
+            if t == "ini"
+        ]
 
         if yaml_files:
             safe_update(config_dict, load_yaml_data(yaml_files))
@@ -206,7 +212,7 @@ class GwaithConfigParser:
     def _check_executables(self) -> None:
         """Check that all of the defined sections have executables defined."""
         executable_keys = self._data["executables"].keys()
-        for section_name, section_data in self._data.items():
+        for section_name in self._data.keys():
             # Skip known global/config level sections
             if section_name in _DEFAULT_SECTION_KEYS:
                 logger.debug(f"Executable check:skipping {section_name}")

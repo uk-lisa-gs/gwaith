@@ -149,4 +149,4 @@ def resolve_filenames_datasets(
     elif len(filenames) > 1 and len(datasets) == 1:
         return [(f, datasets[0]) for f in filenames]
     else:
-        return list(zip(filenames, datasets))
+        return list(zip(filenames, datasets, strict=True))
