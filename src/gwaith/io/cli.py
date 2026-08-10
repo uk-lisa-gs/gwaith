@@ -4,13 +4,16 @@ from __future__ import annotations
 
 import argparse
 
+
 def parse_key_value_tokens(parser, option_string, values):
     tokens = values if isinstance(values, list) else [values]
     out = {}
     for token in tokens:
-        if ':' not in token:
-            parser.error(f'{option_string} mixed values are not allowed; use all key:value pairs')
-        key, value = token.split(':', 1)
+        if ":" not in token:
+            parser.error(
+                f"{option_string} mixed values are not allowed; use all key:value pairs"
+            )
+        key, value = token.split(":", 1)
         key = key.strip()
         value = value.strip()
         if not key:
@@ -24,23 +27,29 @@ def parse_key_value_tokens(parser, option_string, values):
 class MultiOptionAction(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
         tokens = values if isinstance(values, list) else [values]
-        has_mapping = any(':' in token for token in tokens)
+        has_mapping = any(":" in token for token in tokens)
 
         if not has_mapping:
             if len(tokens) != 1:
-                parser.error(f'{option_string} expects either one value or key:value pairs')
+                parser.error(
+                    f"{option_string} expects either one value or key:value pairs"
+                )
             setattr(namespace, self.dest, tokens[0])
             return
 
-        setattr(namespace, self.dest, parse_key_value_tokens(parser, option_string, tokens))
+        setattr(
+            namespace, self.dest, parse_key_value_tokens(parser, option_string, tokens)
+        )
 
 
 class KeyValueOptionAction(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
         tokens = values if isinstance(values, list) else [values]
-        if not any(':' in token for token in tokens):
-            parser.error(f'{option_string} requires key:value pairs')
-        setattr(namespace, self.dest, parse_key_value_tokens(parser, option_string, tokens))
+        if not any(":" in token for token in tokens):
+            parser.error(f"{option_string} requires key:value pairs")
+        setattr(
+            namespace, self.dest, parse_key_value_tokens(parser, option_string, tokens)
+        )
 
 
 def add_data_input_args(
@@ -55,12 +64,12 @@ def add_data_input_args(
     grp.add_argument(
         "--data-file",
         required=True,
-        help="Input HDF5 data file containing original data"
+        help="Input HDF5 data file containing original data",
     )
     grp.add_argument(
         "--data-group",
         required=False,
-        help="Group in the data hdf5 file which contains datasets for each channel"
+        help="Group in the data hdf5 file which contains datasets for each channel",
     )
     return grp
 
@@ -70,15 +79,11 @@ def add_data_output_args(
 ) -> argparse._ArgumentGroup:
     """Add standard data-output file and dataset CLI arguments."""
     grp = parser.add_argument_group("data output")
-    grp.add_argument(
-        "--output-filename",
-        required=True,
-        help="Output HDF5 file"
-    )
+    grp.add_argument("--output-filename", required=True, help="Output HDF5 file")
     grp.add_argument(
         "--output-group",
         required=False,
-        help="Output datasets into this group in the output hdf5 file - default is to use the file root group"
+        help="Output datasets into this group in the output hdf5 file - default is to use the file root group",
     )
     return grp
 
@@ -129,16 +134,14 @@ def resolve_filenames_datasets(
     # 3) N filenames and N datasets
 
     if len(filenames) == 0 or len(datasets) == 0:
-        raise ValueError(
-            "Both filenames and datasets must be provided"
-        )
+        raise ValueError("Both filenames and datasets must be provided")
     if len(filenames) != 1 and len(datasets) != 1:
         if not len(datasets) == len(filenames):
             raise ValueError(
                 "filenames and datasets must be the same length "
                 "or one must have length one"
             )
-    
+
     if len(filenames) == 1 and len(datasets) == 1:
         return [(filenames[0], datasets[0])]
     elif len(filenames) == 1 and len(datasets) > 1:
@@ -147,4 +150,3 @@ def resolve_filenames_datasets(
         return [(f, datasets[0]) for f in filenames]
     else:
         return list(zip(filenames, datasets))
-    

@@ -1,9 +1,8 @@
 """Utility functions for the GWAITH package."""
 
+import argparse
 import importlib
 import inspect
-
-import argparse
 import logging
 from importlib.metadata import PackageNotFoundError, version
 
@@ -11,6 +10,7 @@ __version__ = "0.1.0"
 
 _LOG_FORMAT = "%(levelname)s:%(asctime)s:%(name)s:%(message)s"
 _LOG_DATEFMT = "%Y-%m-%dT%H:%M:%S%z"
+
 
 def _resolve_version() -> str:
     try:
@@ -45,7 +45,10 @@ def add_gwaith_common_options(
 _LOG_FORMAT = "%(levelname)s: %(asctime)s: %(name)s: %(message)s"
 _LOG_DATEFMT = "%Y-%m-%dT%H:%M:%S%z"
 
-def init_logging(verbosity: int = 0, default_level: int = 0, to_file: bool = False) -> int:
+
+def init_logging(
+    verbosity: int = 0, default_level: int = 0, to_file: bool = False
+) -> int:
     """Initialize unified logging format and return selected level."""
     verbosity = verbosity + default_level
     if verbosity <= 0:

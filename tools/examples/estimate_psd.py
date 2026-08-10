@@ -77,8 +77,7 @@ def main(argv: list[str] | None = None) -> int:
     add_data_input_args(
         parser,
         data_help=(
-            "Path to HDF5 data file (e.g. residual from "
-            "gwaith_subtract_signals)"
+            "Path to HDF5 data file (e.g. residual from gwaith_subtract_signals)"
         ),
     )
     add_data_output_args(
@@ -91,10 +90,7 @@ def main(argv: list[str] | None = None) -> int:
         "--fs",
         type=float,
         default=None,
-        help=(
-            "Sampling frequency in Hz; derived from file delta_t "
-            "if not given"
-        ),
+        help=("Sampling frequency in Hz; derived from file delta_t if not given"),
     )
     parser.add_argument(
         "--nperseg", type=int, default=None, help="Segment length for Welch"

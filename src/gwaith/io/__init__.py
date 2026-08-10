@@ -4,22 +4,27 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from .cli import (
+    KeyValueOptionAction,
+    MultiOptionAction,
     add_data_input_args,
     add_data_output_args,
     add_signal_input_args,
-    MultiOptionAction,
-    KeyValueOptionAction
 )
 from .hdf5 import (
     load_frequencyseries as load_frequencyseries_hdf5,
+)
+from .hdf5 import (
     load_timeseries as load_timeseries_hdf5,
+)
+from .hdf5 import (
     write_frequencyseries as write_frequencyseries_hdf5,
+)
+from .hdf5 import (
     write_timeseries as write_timeseries_hdf5,
 )
 
 if TYPE_CHECKING:
-    from gwaith.types import TimeSeries, FrequencySeries
-
+    from gwaith.types import FrequencySeries, TimeSeries
 
 
 from .mojito import (
@@ -28,19 +33,19 @@ from .mojito import (
 )
 
 __all__ = [
-    "get_format_from_filename",
+    "KeyValueOptionAction",
+    "MultiOptionAction",
     "add_data_input_args",
     "add_data_output_args",
     "add_signal_input_args",
-    "resolve_filenames_datasets",
-    "write_timeseries",
-    "load_timeseries",
-    "write_frequencyseries",
+    "get_format_from_filename",
     "load_frequencyseries",
-    'write_mojito_orbits',
-    'write_mojito_tdis',
-    'MultiOptionAction',
-    'KeyValueOptionAction'
+    "load_timeseries",
+    "resolve_filenames_datasets",
+    "write_frequencyseries",
+    "write_mojito_orbits",
+    "write_mojito_tdis",
+    "write_timeseries",
 ]
 
 
@@ -66,12 +71,13 @@ def get_format_from_filename(filepath: str) -> str:
     if suffix in (".h5", ".hdf5", ".hdf"):
         return "hdf5"
     raise ValueError(
-        "Unsupported file format: "
-        f"{suffix!r}. Supported formats: .h5, .hdf5, .hdf"
+        f"Unsupported file format: {suffix!r}. Supported formats: .h5, .hdf5, .hdf"
     )
 
 
-def write_timeseries(ts: TimeSeries, filepath: str, dataset_name: str | None = None) -> None:
+def write_timeseries(
+    ts: TimeSeries, filepath: str, dataset_name: str | None = None
+) -> None:
     """Write a TimeSeries to file, auto-detecting format from extension.
 
     Parameters
@@ -135,7 +141,9 @@ def write_frequencyseries(
         raise ValueError(f"Unknown format: {fmt}")
 
 
-def load_frequencyseries(filepath: str, dataset_name: str | None = None) -> FrequencySeries:
+def load_frequencyseries(
+    filepath: str, dataset_name: str | None = None
+) -> FrequencySeries:
     """Load a FrequencySeries from file, auto-detecting format from extension.
 
     Parameters

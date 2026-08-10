@@ -1,6 +1,6 @@
 import numpy as np
-import pytest
-from gwaith.types import TimeSeries, FrequencySeries
+
+from gwaith.types import FrequencySeries, TimeSeries
 
 
 def test_timeseries_save_and_load(tmp_path):
@@ -10,13 +10,13 @@ def test_timeseries_save_and_load(tmp_path):
     ts_orig = TimeSeries(data, epoch, delta_t)
 
     filepath = tmp_path / "test_ts.h5"
-    ts_orig.save(str(filepath)) # Use default dataset_name
+    ts_orig.save(str(filepath))  # Use default dataset_name
 
-    ts_loaded = TimeSeries.load(str(filepath)) # Load with default dataset_name
+    ts_loaded = TimeSeries.load(str(filepath))  # Load with default dataset_name
     assert np.array_equal(ts_loaded.data, data)
     assert ts_loaded.epoch == epoch
     assert ts_loaded.delta_t == delta_t
-    
+
     # Test with default dataset_name
     filepath_default = tmp_path / "test_ts_default.h5"
     ts_orig.save(str(filepath_default))
@@ -66,4 +66,4 @@ def test_frequencyseries_save_and_load(tmp_path):
     fs_loaded_no_epoch = FrequencySeries.load(str(filepath_no_epoch))
     assert np.array_equal(fs_loaded_no_epoch.data, data)
     assert fs_loaded_no_epoch.f0 == f0
-    assert not hasattr(fs_loaded_no_epoch, 'epoch')
+    assert not hasattr(fs_loaded_no_epoch, "epoch")

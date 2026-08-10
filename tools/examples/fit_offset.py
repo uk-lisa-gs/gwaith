@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import argparse
 import logging
-from pathlib import Path
 
 import yaml
 
@@ -22,6 +21,7 @@ from gwaith.io import (
     write_timeseries,
 )
 from gwaith.types import TimeSeries
+
 from .common import (
     apply_bounds,
     get_param_prior,
@@ -60,8 +60,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="gwaith_fit_offset",
         description=(
-            "Fit a constant offset and output signal timeseries "
-            "+ parameters."
+            "Fit a constant offset and output signal timeseries + parameters."
         ),
     )
     add_data_input_args(parser, data_help="Input HDF5 data file")

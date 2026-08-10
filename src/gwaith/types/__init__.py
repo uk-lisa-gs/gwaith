@@ -1,5 +1,5 @@
+from .frequencyseries import FrequencySeries
 from .series import Series
 from .timeseries import TimeSeries
-from .frequencyseries import FrequencySeries
 
-__all__ = ["Series", "TimeSeries", "FrequencySeries"]
+__all__ = ["FrequencySeries", "Series", "TimeSeries"]

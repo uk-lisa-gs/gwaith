@@ -38,7 +38,6 @@ class GwaithWorkflow:
         Returns:
             GwaithWorkflow:
         """
-        
 
     @classmethod
     def add_input_options(parser):
@@ -57,7 +56,7 @@ class GwaithWorkflow:
         )
         grp.add_argument(
             "--workflow-dir",
-            help="Path to the workflow directory, default is same as --workflow-name"
+            help="Path to the workflow directory, default is same as --workflow-name",
         )
         grp.add_argument(
             "--exporter",
@@ -69,7 +68,5 @@ class GwaithWorkflow:
             ),
         )
         grp.add_argument(
-            "--submit-now",
-            action='store_true',
-            help="If given, submit the workflow"
+            "--submit-now", action="store_true", help="If given, submit the workflow"
         )

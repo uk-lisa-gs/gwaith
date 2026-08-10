@@ -1,20 +1,21 @@
 """Configuration I/O for GWAITH with format auto-detection."""
+
 from pathlib import Path
 from typing import Any
 
-from .yaml_config import load_yaml_data
-from .types import GwaithConfig
 from .parser import GwaithConfigParser, add_config_input_options
-from .utils import safe_update, get_dict_value, resolve_match
+from .types import GwaithConfig
+from .utils import get_dict_value, resolve_match, safe_update
+from .yaml_config import load_yaml_data
 
 __all__ = [
-    "add_config_input_options",
-    "load_yaml_data",
     "GwaithConfig",
     "GwaithConfigParser",
-    "safe_update",
+    "add_config_input_options",
     "get_dict_value",
-    "resolve_match"
+    "load_yaml_data",
+    "resolve_match",
+    "safe_update",
 ]
 
 
@@ -38,6 +39,5 @@ def write_config(filepath: str | Path, config: dict[str, Any]) -> None:
         _write_config_yaml(filepath, config)
         return
     raise ValueError(
-        "Unsupported config format: "
-        f"{suffix!r}. Supported formats: .yaml, .yml"
+        f"Unsupported config format: {suffix!r}. Supported formats: .yaml, .yml"
     )

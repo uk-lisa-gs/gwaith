@@ -73,7 +73,7 @@ class TestSeries:
             s = series_class(series_data, epoch=0, delta_t=1)
         elif series_class.__name__ == "FrequencySeries":
             s = series_class(series_data, f0=0, delta_f=1)
-        
+
         real_s = s.real()
         assert np.array_equal(real_s.data, np.array([1.0, 2.0, 3.0]))
         assert isinstance(real_s, series_class)

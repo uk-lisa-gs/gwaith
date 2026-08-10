@@ -1,12 +1,13 @@
-
+import re
 from pathlib import Path
 from typing import Any
-import re
 
-_TOKEN_RE = re.compile('\\$\\{([^}]+)\\}')
+_TOKEN_RE = re.compile("\\$\\{([^}]+)\\}")
+
 
 class GwaithConfig(dict):
     """A dictionary-like object for handling GWAITH configuration."""
+
     def __init__(self, parser):
         self._data = None
         self._parser = parser
@@ -27,13 +28,13 @@ class GwaithConfig(dict):
         suffix = Path(filepath).suffix.lower()
         if suffix in (".yaml", ".yml"):
             from .yaml_config import write_yaml_config
+
             write_yaml_config(filepath, self)
             return
         raise ValueError(
-            f"Unsupported config format: {suffix!r}. "
-            f"Supported formats: .yaml, .yml"
+            f"Unsupported config format: {suffix!r}. Supported formats: .yaml, .yml"
         )
-        
+
     def get(self, section, option, *, fallback=None, raw=False):
         """Get a value from ``section.option``.
 
@@ -47,7 +48,9 @@ class GwaithConfig(dict):
         value = section_map[option]
         if raw:
             return value
-        return self._resolve_value(value, current_section=section, stack=[(section, option)])
+        return self._resolve_value(
+            value, current_section=section, stack=[(section, option)]
+        )
 
     def sections(self):
         """Return top-level sections that are mappings."""
@@ -70,7 +73,9 @@ class GwaithConfig(dict):
         out: dict[str, Any] = {}
         for key, item in value.items():
             section_for_child = key if isinstance(item, dict) else current_section
-            out[key] = self._resolve_value(item, current_section=section_for_child, stack=stack)
+            out[key] = self._resolve_value(
+                item, current_section=section_for_child, stack=stack
+            )
         return out
 
     def _resolve_value(self, value, *, current_section, stack):
@@ -84,35 +89,44 @@ class GwaithConfig(dict):
         Any:
         """
         if isinstance(value, dict):
-            return self._resolve_mapping(value, current_section=current_section, stack=stack)
+            return self._resolve_mapping(
+                value, current_section=current_section, stack=stack
+            )
         if isinstance(value, list):
-            return [self._resolve_value(v, current_section=current_section, stack=stack) for v in value]
+            return [
+                self._resolve_value(v, current_section=current_section, stack=stack)
+                for v in value
+            ]
         if not isinstance(value, str):
             return value
 
         def _resolve_token(token):
             token = token.strip()
-            if '|' in token:
-                section, option = token.split('|', 1)
+            if "|" in token:
+                section, option = token.split("|", 1)
                 section = section.strip()
                 option = option.strip()
-            elif ':' in token:
-                section, option = token.split(':', 1)
+            elif ":" in token:
+                section, option = token.split(":", 1)
                 section = section.strip()
                 option = option.strip()
             else:
                 if current_section is None:
-                    raise ValueError(f"Cannot resolve token '${{{token}}}' without a section context")
+                    raise ValueError(
+                        f"Cannot resolve token '${{{token}}}' without a section context"
+                    )
                 section = current_section
                 option = token
             key = (section, option)
             if key in stack:
-                cycle = ' -> '.join((f'{s}.{o}' for s, o in [*stack, key]))
-                raise ValueError(f'Config interpolation cycle detected: {cycle}')
+                cycle = " -> ".join((f"{s}.{o}" for s, o in [*stack, key]))
+                raise ValueError(f"Config interpolation cycle detected: {cycle}")
             target = self._lookup(section, option)
             if target is None:
-                raise KeyError(f'Missing interpolation reference: {section}.{option}')
-            return self._resolve_value(target, current_section=section, stack=[*stack, key])
+                raise KeyError(f"Missing interpolation reference: {section}.{option}")
+            return self._resolve_value(
+                target, current_section=section, stack=[*stack, key]
+            )
 
         exact_match = _TOKEN_RE.fullmatch(value)
         if exact_match:
@@ -137,6 +151,7 @@ class GwaithConfig(dict):
             return section_map[option]
         return None
 
+
 def write_config(filepath: str | Path, config: dict[str, Any]) -> None:
     """Write a configuration file, auto-detecting format from extension.
 
@@ -157,6 +172,5 @@ def write_config(filepath: str | Path, config: dict[str, Any]) -> None:
         write_to_yaml(filepath, config)
         return
     raise ValueError(
-        f"Unsupported config format: {suffix!r}. "
-        f"Supported formats: .yaml, .yml"
+        f"Unsupported config format: {suffix!r}. Supported formats: .yaml, .yml"
     )

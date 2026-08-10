@@ -16,11 +16,9 @@ from __future__ import annotations
 import argparse
 import logging
 from pathlib import Path
-import yaml
 
 import numpy as np
 import yaml
-from scipy.optimize import differential_evolution
 
 from gwaith import add_gwaith_common_options, init_logging
 from gwaith.io import (
@@ -30,8 +28,8 @@ from gwaith.io import (
     write_timeseries,
 )
 from gwaith.types import TimeSeries
+
 from .common import (
-    apply_bounds,
     get_param_prior,
     load_prior_file,
 )
@@ -48,12 +46,9 @@ def _sine_gaussian_model(
     phase: float = 0.0,
 ) -> np.ndarray:
     """Generate a sine-gaussian signal."""
-    gaussian_envelope = amplitude * np.exp(
-        -(t - central_time) ** 2 / (2 * width ** 2)
-    )
+    gaussian_envelope = amplitude * np.exp(-((t - central_time) ** 2) / (2 * width**2))
     sinusoidal = np.sin(2.0 * np.pi * frequency * t + phase)
     return gaussian_envelope * sinusoidal
-
 
 
 def _fit_single_instance(
@@ -67,7 +62,7 @@ def _fit_single_instance(
     Only amplitude, frequency, and central_time are fitted.
     """
     frequency_prior = get_param_prior(instance_priors, "frequency")
-    central_time_prior = get_param_prior(instance_priors, "central_time") # noqa: E501
+    central_time_prior = get_param_prior(instance_priors, "central_time")
 
     # Validate that required bounds exist
     if not all(k in central_time_prior for k in ["min", "max"]):
@@ -78,8 +73,11 @@ def _fit_single_instance(
     if "value" in frequency_prior:
         freq_fixed = float(frequency_prior["value"])
     else:
-        # If not provided, use the midpoint of min/max # noqa: E501
-        freq_fixed = (float(frequency_prior.get("min", 0.0)) + float(frequency_prior.get("max", 1.0))) / 2.0
+        # If not provided, use the midpoint of min/max
+        freq_fixed = (
+            float(frequency_prior.get("min", 0.0))
+            + float(frequency_prior.get("max", 1.0))
+        ) / 2.0
 
     # Initial guess for central_time
     if "value" in central_time_prior:
@@ -103,7 +101,9 @@ def _fit_single_instance(
     # Objective function: minimize squared error (fit t0 only)
     def objective(params):
         t0 = params[0]
-        model = _sine_gaussian_model(t_win, t0, 1.0, freq_fixed)  # amplitude=1 for LS fit
+        model = _sine_gaussian_model(
+            t_win, t0, 1.0, freq_fixed
+        )  # amplitude=1 for LS fit
         # Analytic least squares amplitude fit
         amp_num = np.dot(residual_win, model)
         amp_den = np.dot(model, model)
@@ -119,6 +119,7 @@ def _fit_single_instance(
     x0 = [t0_init]
 
     from scipy.optimize import minimize
+
     result = minimize(objective, x0, bounds=bounds, method="L-BFGS-B")
     if not result.success:
         logger.warning("Optimization failed: %s", result.message)
@@ -138,18 +139,16 @@ def _fit_single_instance(
     }
 
 
-def fit_sine_gaussians(
-    data_ts: TimeSeries, priors: dict
-) -> list[dict[str, float]]:
+def fit_sine_gaussians(data_ts: TimeSeries, priors: dict) -> list[dict[str, float]]:
     """Fit multiple sine-gaussian instances from priors structure.
-    
+
     Priors should be structured as:
     {
         0: {amplitude: {...}, frequency: {...}, ...},
         1: {amplitude: {...}, frequency: {...}, ...},
         ...
     }
-    
+
     Fits sequentially, subtracting each fitted signal from the residual.
     """
     y = np.asarray(data_ts.data, dtype=float)
@@ -157,19 +156,21 @@ def fit_sine_gaussians(
     residual = y.copy()
 
     components = []
-    
+
     # Find all numeric keys (instance indices) - handle both int and str keys
     instance_keys = []
-    for k in priors.keys():
+    for k in priors:
         if isinstance(k, int):
             instance_keys.append(k)
         elif isinstance(k, str) and k.isdigit():
             instance_keys.append(int(k))
-    
+
     instance_keys = sorted(instance_keys)
-    
+
     if not instance_keys:
-        logger.warning("No indexed instances found in priors (keys: %s)", list(priors.keys()))
+        logger.warning(
+            "No indexed instances found in priors (keys: %s)", list(priors.keys())
+        )
         return []
 
     for instance_idx in instance_keys:
@@ -177,30 +178,26 @@ def fit_sine_gaussians(
         prior_key = instance_idx
         if prior_key not in priors and str(prior_key) in priors:
             prior_key = str(prior_key)
-        
+
         instance_priors = priors[prior_key]
-        
+
         logger.info("Fitting fixed-width sine-gaussian instance %d", instance_idx)
         params = _fit_single_instance(residual, t, data_ts.delta_t, instance_priors)
-        
+
         if params is None:
             logger.warning("Failed to fit instance %d", instance_idx)
             continue
-        
+
         components.append(params)
-        
+
         # Subtract fitted signal from residual for next iteration
         fitted_signal = _sine_gaussian_model(
-            t,
-            params["central_time"],
-            params["amplitude"],
-            params["frequency"]
+            t, params["central_time"], params["amplitude"], params["frequency"]
         )
         residual = residual - fitted_signal
-        
+
         logger.info(
-            "Instance %d: central_time=%.1f, "
-            "amplitude=%.6f, frequency=%.2e",
+            "Instance %d: central_time=%.1f, amplitude=%.6f, frequency=%.2e",
             instance_idx,
             params["central_time"],
             params["amplitude"],
@@ -247,7 +244,6 @@ def _build_next_round_priors(
         width_seed = get_param_prior(seed, "width")
         freq_seed = get_param_prior(seed, "frequency")
 
-
         next_priors[index] = {
             "amplitude": {
                 "min": float(amp_seed.get("min", max(0.0, 0.5 * amp))),
@@ -290,7 +286,9 @@ def sine_gaussian_model(
     return TimeSeries(data=model, epoch=ts.epoch, delta_t=ts.delta_t)
 
 
-def sine_gaussian_component_model(ts: TimeSeries, component: dict[str, float]) -> TimeSeries:
+def sine_gaussian_component_model(
+    ts: TimeSeries, component: dict[str, float]
+) -> TimeSeries:
     """Generate a signal timeseries for a single sine-gaussian component."""
     t = np.arange(len(ts.data)) * ts.delta_t
     model = _sine_gaussian_model(
@@ -361,7 +359,9 @@ def main(argv: list[str] | None = None) -> int:
             logger.warning("No sine-gaussian components fitted")
             components = []
 
-        logger.debug("Fitted components:\n%s", yaml.dump(components, default_flow_style=False))
+        logger.debug(
+            "Fitted components:\n%s", yaml.dump(components, default_flow_style=False)
+        )
         # Generate signal from fitted components
         signal_ts = sine_gaussian_model(data_ts, components)
 

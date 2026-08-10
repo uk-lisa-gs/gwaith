@@ -1,12 +1,12 @@
 """Pegasus workflow generator for GWAITH."""
 
-from pathlib import Path
 import logging
+from pathlib import Path
 
 from gwaith import import_optional
-import Pegasus
+
 pegasus_api = import_optional("Pegasus.api")
-logger = logging.getLogger('gwaith.workflow.pegasus_generator')
+logger = logging.getLogger("gwaith.workflow.pegasus_generator")
 
 
 def build_pegasus_workflow(config, workflow_name, workflow_dir):
@@ -23,7 +23,7 @@ def build_pegasus_workflow(config, workflow_name, workflow_dir):
     """
     logger.info("Building Pegasus workflow from configuration")
 
-    # --- Catalogs ---    
+    # --- Catalogs ---
     sc = pegasus_api.SiteCatalog()
     tc = pegasus_api.TransformationCatalog()
     rc = pegasus_api.ReplicaCatalog()
@@ -43,16 +43,23 @@ def build_pegasus_workflow(config, workflow_name, workflow_dir):
     # A more advanced version could get paths from the config.
     executables = config.get("executables", {})
     for name, path in executables.items():
-        trans = pegasus_api.Transformation(name, site="local", pfn=path, is_stageable=False)
+        trans = pegasus_api.Transformation(
+            name, site="local", pfn=path, is_stageable=False
+        )
         tc.add_transformations(trans)
 
     modules = config.get("modules", {})
     for mod_name, mod_config in modules.items():
-        if 'executable' in mod_config:
-             # This assumes the executable name in the config matches a transformation name
-            trans_name = mod_config['executable'].split('/')[-1]
+        if "executable" in mod_config:
+            # This assumes the executable name in the config matches a transformation name
+            trans_name = mod_config["executable"].split("/")[-1]
             if trans_name not in tc.transformations:
-                trans = pegasus_api.Transformation(trans_name, site="local", pfn=mod_config['executable'], is_stageable=False)
+                trans = pegasus_api.Transformation(
+                    trans_name,
+                    site="local",
+                    pfn=mod_config["executable"],
+                    is_stageable=False,
+                )
                 tc.add_transformations(trans)
 
     wf.add_transformation_catalog(tc)
@@ -63,18 +70,15 @@ def build_pegasus_workflow(config, workflow_name, workflow_dir):
     # For now, let's create one job for each module as a demonstration.
 
     for mod_name, mod_config in modules.items():
-        if 'executable' not in mod_config:
+        if "executable" not in mod_config:
             continue
 
-        trans_name = mod_config['executable'].split('/')[-1]
+        trans_name = mod_config["executable"].split("/")[-1]
         output_file_lfn = f"{mod_name}_output.txt"
         output_file = pegasus_api.File(output_file_lfn)
 
         job = pegasus_api.Job(trans_name)
-        job.add_args(
-            "--input", input_file,
-            "--output", output_file
-        )
+        job.add_args("--input", input_file, "--output", output_file)
         job.add_inputs(input_file)
         job.add_outputs(output_file, stage_out=True)
 
