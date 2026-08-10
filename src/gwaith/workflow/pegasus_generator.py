@@ -4,7 +4,7 @@ import logging
 from pathlib import Path
 
 from gwaith import import_optional
-from gwaith.types import GwaithFile
+from gwaith.workflow import GwaithFile
 
 pegasus_api = import_optional("Pegasus.api")
 logger = logging.getLogger("gwaith.workflow.pegasus_generator")

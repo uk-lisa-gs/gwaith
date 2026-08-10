@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+from pathlib import Path
 
 from gwaith import add_gwaith_common_options, init_logging
 from gwaith.config import GwaithConfigParser, add_config_input_options
@@ -31,9 +32,9 @@ def main(argv: list[str] | None = None) -> int:
 
     # Also log to a file, so that the generator log can be added to the results page
     wf_log_file = GwaithFile(
-        args.workflow_dir / f"{args.workflow_name}_workflow_generation.log"
+        Path(args.workflow_dir) / f"{args.workflow_name}_workflow_generation.log"
     )
-    init_logging(args.verbose, wf_log_file)
+    init_logging(args.verbose, to_file=wf_log_file.local_path)
 
     logger.info("Loading Config")
     config_parser = GwaithConfigParser.from_cli(args)

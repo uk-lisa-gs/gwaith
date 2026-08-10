@@ -40,7 +40,7 @@ class GwaithWorkflow:
         """
 
     @classmethod
-    def add_input_options(parser):
+    def add_input_options(cls, parser):
         """
         Adds an argumnet group to an argparse ArgumentParser with the options
         needed to define a workflow.
