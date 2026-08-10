@@ -20,7 +20,6 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-  "qlty>=2.0",
   "ruff>=0.1",
   "pytest>=8.0",
 ]
@@ -32,7 +31,7 @@ gwaith_estimate_psd = "tools.examples.estimate_psd:main"
 gwaith_fit_sine = "tools.examples.fit_sine:main"
 gwaith_fit_offset = "tools.examples.fit_offset:main"
 gwaith_fit_sine_gaussian = "tools.examples.fit_sine_gaussian:main"
-gwaith_build_workflow = "tools.workflow.build_workflow:main"
+gwaith_build_global_fit_workflow = "tools.workflow.build_global_fit_workflow:main"
 gwaith_ingest_data = "tools.data.ingest_data:main"
 
 [tool.setuptools]

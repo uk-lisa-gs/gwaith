@@ -21,37 +21,24 @@ yaml.add_implicit_resolver(
 # 3. If the value is missing, give back an empty string rather than None
 yaml.SafeLoader.add_constructor("tag:yaml.org,2002:null", lambda loader, node: "")
 
+
 logger = logging.getLogger("gwaith.config.yaml")
 
 
-def _deep_merge(base: dict[str, Any], update: dict[str, Any]) -> None:
-    """Recursively merge the update dictionary into the base dictionary."""
-    for key, value in update.items():
-        if isinstance(value, dict) and key in base and isinstance(base[key], dict):
-            _deep_merge(base[key], value)
-        else:
-            base[key] = value
+def load_yaml_data(path: str | Path) -> dict[str, Any]:
+    """Load a YAML config file into a dictionary."""
+    p = Path(path)
+    logger.info(f"Loading YAML Config from: {p}")
+    with p.open("r", encoding="utf-8") as f:
+        data = yaml.safe_load(f) or {}
+    return data
 
 
-def _load_yaml_data(paths: str | Path | Sequence[str | Path]) -> dict[str, Any]:
-    """Load YAML config file(s) and consolidate them into a single dictionary."""
-    if isinstance(paths, (str, Path)):
-        paths = [paths]
-
-    consolidated: dict[str, Any] = {}
-    for path in paths:
-        p = Path(path)
-        logger.info(f"Loading YAML Config from: {p}")
-        with p.open("r", encoding="utf-8") as f:
-            data = yaml.safe_load(f) or {}
-            _deep_merge(consolidated, data)
-
-    return consolidated
-
-
-def _write_yaml_data(data: dict[str, Any], output_path: str | Path) -> None:
+def write_yaml_data(data: dict[str, Any], output_path: str | Path) -> None:
     """Write config data to a YAML file."""
     p = Path(output_path)
     logger.info(f"Writing YAML Config to: {p}")
     with p.open("w", encoding="utf-8") as f:
         yaml.safe_dump(data, f, default_flow_style=False)
+
+__all__ = ["load_yaml_data", "write_yaml_data"]

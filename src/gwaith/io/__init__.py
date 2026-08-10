@@ -1,7 +1,8 @@
 """GWAITH I/O: file format dispatcher for series save/load methods."""
 
 from pathlib import Path
-from typing import TYPE_CHECKING
+
+from gwaith.types import FrequencySeries, TimeSeries
 
 from .cli import (
     KeyValueOptionAction,
@@ -22,10 +23,6 @@ from .hdf5 import (
 from .hdf5 import (
     write_timeseries as write_timeseries_hdf5,
 )
-
-if TYPE_CHECKING:
-    from gwaith.types import FrequencySeries, TimeSeries
-
 
 from .mojito import (
     write_mojito_orbits,
