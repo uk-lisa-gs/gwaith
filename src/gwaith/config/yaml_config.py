@@ -33,7 +33,7 @@ def _deep_merge(base: dict[str, Any], update: dict[str, Any]) -> None:
             base[key] = value
 
 
-def load_yaml_data(paths: str | Path | Sequence[str | Path]) -> dict[str, Any]:
+def _load_yaml_data(paths: str | Path | Sequence[str | Path]) -> dict[str, Any]:
     """Load YAML config file(s) and consolidate them into a single dictionary."""
     if isinstance(paths, (str, Path)):
         paths = [paths]
@@ -49,7 +49,9 @@ def load_yaml_data(paths: str | Path | Sequence[str | Path]) -> dict[str, Any]:
     return consolidated
 
 
-__all__ = [
-    "load_yaml_data",
-    "write_to_yaml",
-]
+def _write_yaml_data(data: dict[str, Any], output_path: str | Path) -> None:
+    """Write config data to a YAML file."""
+    p = Path(output_path)
+    logger.info(f"Writing YAML Config to: {p}")
+    with p.open("w", encoding="utf-8") as f:
+        yaml.safe_dump(data, f, default_flow_style=False)

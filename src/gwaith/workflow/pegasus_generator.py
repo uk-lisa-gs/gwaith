@@ -4,6 +4,7 @@ import logging
 from pathlib import Path
 
 from gwaith import import_optional
+from gwaith.types import GwaithFile
 
 pegasus_api = import_optional("Pegasus.api")
 logger = logging.getLogger("gwaith.workflow.pegasus_generator")
@@ -24,7 +25,7 @@ def build_pegasus_workflow(config, workflow_name, workflow_dir):
     logger.info("Building Pegasus workflow from configuration")
 
     # --- Catalogs ---
-    sc = pegasus_api.SiteCatalog()
+    # sc = pegasus_api.SiteCatalog()
     tc = pegasus_api.TransformationCatalog()
     rc = pegasus_api.ReplicaCatalog()
 
@@ -34,7 +35,7 @@ def build_pegasus_workflow(config, workflow_name, workflow_dir):
     # --- Input Data ---
     input_file_path = config.get("input", "data_file")
     input_file_lfn = Path(input_file_path).name
-    input_file = File(input_file_lfn)
+    input_file = GwaithFile(input_file_lfn)
     rc.add_replica("local", input_file, f"file://{Path(input_file_path).resolve()}")
     wf.add_replica_catalog(rc)
 
@@ -49,7 +50,7 @@ def build_pegasus_workflow(config, workflow_name, workflow_dir):
         tc.add_transformations(trans)
 
     modules = config.get("modules", {})
-    for mod_name, mod_config in modules.items():
+    for mod_config in modules.values():
         if "executable" in mod_config:
             # This assumes the executable name in the config matches a transformation name
             trans_name = mod_config["executable"].split("/")[-1]

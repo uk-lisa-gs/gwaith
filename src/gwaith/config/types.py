@@ -150,27 +150,3 @@ class GwaithConfig(dict):
         if isinstance(section_map, dict) and option in section_map:
             return section_map[option]
         return None
-
-
-def write_config(filepath: str | Path, config: dict[str, Any]) -> None:
-    """Write a configuration file, auto-detecting format from extension.
-
-    Parameters
-    ----------
-    filepath:
-        Path to the configuration file.
-    config:
-        Configuration dictionary to write.
-
-    Raises
-    ------
-    ValueError:
-        If file extension is not recognized.
-    """
-    suffix = Path(filepath).suffix.lower()
-    if suffix in (".yaml", ".yml"):
-        write_to_yaml(filepath, config)
-        return
-    raise ValueError(
-        f"Unsupported config format: {suffix!r}. Supported formats: .yaml, .yml"
-    )

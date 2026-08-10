@@ -37,9 +37,9 @@ def get_dict_value(data_dict, path_list):
             return d[key]
 
         return reduce(traverse, path_list, data_dict)
-    except (KeyError, TypeError):
+    except (KeyError, TypeError) as err:
         path_str = "".join(f"[{k}]" for k in current_path)
-        raise LookupError(f"Path does not exist: {path_str}")
+        raise LookupError(f"Path does not exist: {path_str}") from err
 
 
 _TOKEN_RE = re.compile(r"\$\{([^}]+)\}")
@@ -81,40 +81,39 @@ def resolve_match(string_to_match, full_dict, path=None):
     return interpolated_result
 
 
-def interpolate_list(l, full_dict, path=None):
+def interpolate_list(list_to_interpolate, full_dict, path=None):
     if path is None:
         path = []
-    for i, v in enumerate(l):
+    for i, v in enumerate(list_to_interpolate):
         current_path = path + [str(i)]
         logger.debug(
             "Interpolating values from list [%s], value %d", "][".join(path), i
         )
         if isinstance(v, dict):
             interpolate_dict(v, full_dict, path=current_path)
-        if isinstance(v, list):
+        elif isinstance(v, list):
             interpolate_list(v, full_dict, path=current_path)
         elif isinstance(v, str):
-            l[i] = resolve_match(v, full_dict, path=current_path)
+            list_to_interpolate[i] = resolve_match(v, full_dict, path=current_path)
         else:
             logger.error(f"Unknown how to handle value {v}, type {type(v)}")
-    return l
 
 
-def interpolate_dict(d, full_dict=None, path=None):
+def interpolate_dict(dict_to_interpolate, full_dict=None, path=None):
     if path is None:
         path = []
     if full_dict is None:
-        full_dict = d
+        full_dict = dict_to_interpolate
     logger.debug("Interpolating values in [%s]", "][".join(path))
-    for k, v in list(d.items()):
+    for k, v in list(dict_to_interpolate.items()):
         current_path = path + [str(k)]
         logger.debug("Interpolating values in [%s]", "][".join(current_path))
         if isinstance(v, dict):
             interpolate_dict(v, full_dict, path=current_path)
         elif isinstance(v, list):
-            d[k] = interpolate_list(v, full_dict, path=current_path)
+            interpolate_list(v, full_dict, path=current_path)
         else:
-            d[k] = resolve_match(v, full_dict, path=current_path)
+            dict_to_interpolate[k] = resolve_match(v, full_dict, path=current_path)
 
 
 __all__ = [

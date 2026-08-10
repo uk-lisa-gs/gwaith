@@ -47,7 +47,7 @@ while IFS=$'\t' read -r uid status retries script_path || [[ -n "$uid" ]]; do
     if [[ "$status" == "RETRY" ]]; then
         while [[ "$retries" -gt 0 ]]; do
             echo "Running job: $uid (Retries left: $retries)"
-            
+
             # Temporarily disable exit-on-error to handle script failure gracefully
             set +e
             bash "$script_path"
@@ -69,9 +69,9 @@ while IFS=$'\t' read -r uid status retries script_path || [[ -n "$uid" ]]; do
                 fi
             fi
         done
-        
+
         printf "%s\t%s\t%s\t%s\n" "$uid" "$status" "$retries" "$script_path" >> "$TEMP_STATE"
-        
+
         if [[ "$status" != "DONE" ]]; then
             ALL_DONE=false
             # Output the remaining unexecuted jobs exactly as they are in the file to the temp state

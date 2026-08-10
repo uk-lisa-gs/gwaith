@@ -85,11 +85,10 @@ def separate_processor_options(processor_option_dict):
     #         truncate_kwargs[key] = processor_option_dict[key]
 
     # Extract window parameters
-    for key in WINDOW_OPTIONS:
-        if "window" in processor_option_dict:
-            window_kwargs["window"] = processor_option_dict["window"]
-        if "alpha" in processor_option_dict:
-            window_kwargs["alpha"] = float(processor_option_dict["alpha"])
+    if "window" in processor_option_dict:
+        window_kwargs["window"] = processor_option_dict["window"]
+    if "alpha" in processor_option_dict:
+        window_kwargs["alpha"] = float(processor_option_dict["alpha"])
 
     # Extract chunk parameters
     for key in CHUNK_OPTIONS:
