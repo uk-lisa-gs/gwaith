@@ -31,9 +31,9 @@ def main(argv: list[str] | None = None) -> int:
         config_parser,
         workflow_name=args.workflow_name,
         workflow_dir=args.workflow_dir,
-        exporter=args.exporter
+        exporter=args.exporter,
     )
-    
+
     # Export workflow to disk
     logger.info("Exporting workflow")
     exporter = get_exporter(args.exporter)

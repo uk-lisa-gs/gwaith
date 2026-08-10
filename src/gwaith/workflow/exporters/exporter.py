@@ -23,6 +23,8 @@ class GwaithExporter(ABC):
     """Base class for workflow exporters."""
 
     @abstractmethod
-    def export(self, workflow: GwaithWorkflow, workflow_dir: Path) -> GwaithExportResult:
+    def export(
+        self, workflow: GwaithWorkflow, workflow_dir: Path
+    ) -> GwaithExportResult:
         """Export a workflow to disk."""
         raise NotImplementedError

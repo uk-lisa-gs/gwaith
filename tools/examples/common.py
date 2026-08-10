@@ -21,9 +21,7 @@ def load_prior_file(path: str) -> dict[str, Any]:
         with p.open("r", encoding="utf-8") as f:
             data = yaml.safe_load(f) or {}
         if not isinstance(data, dict):
-            raise ValueError(
-                "YAML prior file must parse to a mapping/dictionary"
-            )
+            raise ValueError("YAML prior file must parse to a mapping/dictionary")
         return _normalise_numeric_expressions(data)
 
     if suffix == ".ini":
@@ -31,9 +29,7 @@ def load_prior_file(path: str) -> dict[str, Any]:
         parser.read(path)
         out: dict[str, Any] = {}
         for section in parser.sections():
-            out[section] = {
-                k: _coerce_numeric(v) for k, v in parser.items(section)
-            }
+            out[section] = {k: _coerce_numeric(v) for k, v in parser.items(section)}
         return _normalise_numeric_expressions(out)
 
     raise ValueError("Unsupported prior file type. Use .yaml/.yml or .ini")
@@ -49,8 +45,7 @@ def _coerce_numeric(value: str) -> float | str:
 def _normalise_numeric_expressions(value: Any) -> Any:
     if isinstance(value, dict):
         return {
-            key: _normalise_numeric_expressions(item)
-            for key, item in value.items()
+            key: _normalise_numeric_expressions(item) for key, item in value.items()
         }
     if isinstance(value, list):
         return [_normalise_numeric_expressions(item) for item in value]
@@ -89,13 +84,9 @@ def _parse_numeric_expression(value: str) -> float | str:
     def _eval(expr: ast.AST) -> float:
         if isinstance(expr, ast.Expression):
             return _eval(expr.body)
-        if isinstance(expr, ast.Constant) and isinstance(
-            expr.value, (int, float)
-        ):
+        if isinstance(expr, ast.Constant) and isinstance(expr.value, (int, float)):
             return float(expr.value)
-        if isinstance(expr, ast.UnaryOp) and isinstance(
-            expr.op, (ast.UAdd, ast.USub)
-        ):
+        if isinstance(expr, ast.UnaryOp) and isinstance(expr.op, (ast.UAdd, ast.USub)):
             val = _eval(expr.operand)
             return val if isinstance(expr.op, ast.UAdd) else -val
         if isinstance(expr, ast.BinOp) and type(expr.op) in binary_ops:

@@ -3,13 +3,13 @@
 from .utils import (
     __version__,
     add_gwaith_common_options,
-    init_logging,
     import_optional,
+    init_logging,
 )
 
 __all__ = [
     "__version__",
     "add_gwaith_common_options",
-    "init_logging",
     "import_optional",
+    "init_logging",
 ]

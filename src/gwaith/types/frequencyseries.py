@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
-from typing import Any, Union
-import numpy as np
-import numpy.fft as fft
 import h5py
+import numpy as np
+from numpy import fft
 
 from .series import Series
 
@@ -51,7 +50,7 @@ class FrequencySeries(Series):
             f"n_bins={len(self.data)})"
         )
 
-    def __getitem__(self, key: Union[int, slice]) -> Union[Any, "FrequencySeries"]:
+    def __getitem__(self, key: int | slice) -> Any | FrequencySeries:
         if isinstance(key, int):
             return self.data[key]
         elif isinstance(key, slice):
@@ -60,7 +59,9 @@ class FrequencySeries(Series):
             new_f0 = self.f0 + start * self.delta_f
             new_delta_f = self.delta_f * (step if step is not None else 1)
             epoch = getattr(self, "epoch", None)
-            return FrequencySeries(new_data, delta_f=new_delta_f, f0=new_f0, epoch=epoch)
+            return FrequencySeries(
+                new_data, delta_f=new_delta_f, f0=new_f0, epoch=epoch
+            )
         else:
             raise TypeError(f"Invalid key type: {type(key)}")
 
@@ -74,11 +75,9 @@ class FrequencySeries(Series):
         if self.f0 != other.f0:
             raise ValueError(f"f0 mismatch: {self.f0} != {other.f0}")
         if self.delta_f != other.delta_f:
-            raise ValueError(
-                f"delta_f mismatch: {self.delta_f} != {other.delta_f}"
-            )
+            raise ValueError(f"delta_f mismatch: {self.delta_f} != {other.delta_f}")
 
-    def to_timeseries(self, delta_t: float = None) -> "TimeSeries":
+    def to_timeseries(self, delta_t: float = None) -> TimeSeries:
         """Computes the inverse Fourier transform of the frequencyseries."""
         from .timeseries import TimeSeries
 
@@ -94,7 +93,7 @@ class FrequencySeries(Series):
         epoch = getattr(self, "epoch", 0)
         return TimeSeries(ts_data, epoch, delta_t)
 
-    def cyclic_time_shift(self, seconds: float) -> "FrequencySeries":
+    def cyclic_time_shift(self, seconds: float) -> FrequencySeries:
         """Cyclically shifts the frequencyseries by a given number of seconds."""
         phase_shift = np.exp(2j * np.pi * self.frequencies * seconds)
         shifted_data = self.data * phase_shift
@@ -123,7 +122,7 @@ class FrequencySeries(Series):
                 group.attrs["epoch"] = self.epoch
 
     @classmethod
-    def load(cls, filepath: str, dataset_name: str | None = None) -> "FrequencySeries":
+    def load(cls, filepath: str, dataset_name: str | None = None) -> FrequencySeries:
         """Load a FrequencySeries from an HDF5 file.
 
         Parameters

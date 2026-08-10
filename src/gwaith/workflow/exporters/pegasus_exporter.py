@@ -1,9 +1,10 @@
 """Pegasus workflow exporter."""
+
 import logging
-from pathlib import Path
-from .exporter import GwaithExporter, GwaithExportResult
+
 from gwaith import import_optional
 
+from .exporter import GwaithExporter, GwaithExportResult
 
 pegasus_api = import_optional("pegasus.api")
 logger = logging.getLogger(__name__)

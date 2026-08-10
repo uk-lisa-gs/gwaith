@@ -1,0 +1,26 @@
+# Configuration for qlty: https://github.com/qltysh/qlty
+[tool.qlty]
+# Define the tools that qlty will run.
+tools = ["ruff"]
+
+# Configuration for ruff: https://docs.astral.sh/ruff/
+[tool.ruff]
+line-length = 88
+target-version = "py310"
+
+[tool.ruff.lint]
+# Enable Pyflakes (F), pycodestyle (E, W), and isort (I) rules.
+select = ["E", "W", "F", "I"]
+ignore = [
+    # Line-too-long is handled by the formatter, not the linter.
+    "E501",
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Allow unused imports in __init__.py files, as they are often used to expose APIs.
+"src/gwaith/__init__.py" = ["F401"]
+"tools/__init__.py" = ["F401"]
+
+[tool.ruff.format]
+# Use double quotes for strings.
+quote-style = "double"

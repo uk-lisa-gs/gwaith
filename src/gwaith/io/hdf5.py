@@ -11,10 +11,10 @@ import h5py
 from gwaith.types import FrequencySeries, TimeSeries
 
 __all__ = [
-    "load_timeseries",
-    "write_timeseries",
     "load_frequencyseries",
+    "load_timeseries",
     "write_frequencyseries",
+    "write_timeseries",
 ]
 
 
@@ -29,21 +29,21 @@ def load_timeseries(filepath: str, dataset_name: str | None = None) -> TimeSerie
             )
         data = f[actual_dataset_name][:]
         if "epoch" not in f.attrs:
-            raise KeyError(
-                f"File {filepath!r} is missing required attribute 'epoch'"
-            )
+            raise KeyError(f"File {filepath!r} is missing required attribute 'epoch'")
         if "delta_t" not in f.attrs:
-            raise KeyError(
-                f"File {filepath!r} is missing required attribute 'delta_t'"
-            )
+            raise KeyError(f"File {filepath!r} is missing required attribute 'delta_t'")
         epoch = float(f.attrs["epoch"])
         delta_t = float(f.attrs["delta_t"])
     return TimeSeries(data=data, epoch=epoch, delta_t=delta_t)
 
 
-def load_frequencyseries(filepath: str, dataset_name: str | None = None) -> FrequencySeries:
+def load_frequencyseries(
+    filepath: str, dataset_name: str | None = None
+) -> FrequencySeries:
     """Load a :class:`~gwaith.types.FrequencySeries` from an HDF5 file."""
-    actual_dataset_name = dataset_name if dataset_name is not None else "frequencyseries"
+    actual_dataset_name = (
+        dataset_name if dataset_name is not None else "frequencyseries"
+    )
     with h5py.File(filepath, "r") as f:
         if actual_dataset_name not in f:
             raise KeyError(
@@ -52,13 +52,9 @@ def load_frequencyseries(filepath: str, dataset_name: str | None = None) -> Freq
             )
         data = f[actual_dataset_name][:]
         if "f0" not in f.attrs:
-            raise KeyError(
-                f"File {filepath!r} is missing required attribute 'f0'"
-            )
+            raise KeyError(f"File {filepath!r} is missing required attribute 'f0'")
         if "delta_f" not in f.attrs:
-            raise KeyError(
-                f"File {filepath!r} is missing required attribute 'delta_f'"
-            )
+            raise KeyError(f"File {filepath!r} is missing required attribute 'delta_f'")
         f0 = float(f.attrs["f0"])
         delta_f = float(f.attrs["delta_f"])
 
@@ -67,7 +63,9 @@ def load_frequencyseries(filepath: str, dataset_name: str | None = None) -> Freq
     return FrequencySeries(data=data, delta_f=delta_f, f0=f0, epoch=epoch)
 
 
-def write_timeseries(ts: TimeSeries, filepath: str, dataset_name: str | None = None) -> None:
+def write_timeseries(
+    ts: TimeSeries, filepath: str, dataset_name: str | None = None
+) -> None:
     """Write a :class:`~gwaith.types.TimeSeries` to an HDF5 file."""
     actual_dataset_name = dataset_name if dataset_name is not None else "timeseries"
     with h5py.File(filepath, "w") as f:
@@ -80,7 +78,9 @@ def write_frequencyseries(
     series: FrequencySeries, filepath: str, dataset_name: str | None = None, **attrs
 ) -> None:
     """Write a :class:`~gwaith.types.FrequencySeries` to an HDF5 file."""
-    actual_dataset_name = dataset_name if dataset_name is not None else "frequencyseries"
+    actual_dataset_name = (
+        dataset_name if dataset_name is not None else "frequencyseries"
+    )
     with h5py.File(filepath, "w") as f:
         f.create_dataset(actual_dataset_name, data=series.data)
         f.attrs["f0"] = series.f0

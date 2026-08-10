@@ -23,6 +23,7 @@ from gwaith.io import (
     write_timeseries,
 )
 from gwaith.types import TimeSeries
+
 from .common import (
     apply_bounds,
     get_param_prior,
@@ -71,9 +72,7 @@ def _fit_component_at_frequency(
     return amplitude, phase, component
 
 
-def fit_sine_parameters(
-    data_ts: TimeSeries, priors: dict
-) -> list[dict[str, float]]:
+def fit_sine_parameters(data_ts: TimeSeries, priors: dict) -> list[dict[str, float]]:
     """Fit multiple sine components.
 
     The loop stops when amplitude falls below the prior minimum.
@@ -122,9 +121,7 @@ def fit_sine_parameters(
         f0: float | None = None
         for idx_local in candidate_indices:
             f_try = float(valid_freqs[int(idx_local)])
-            if all(
-                abs(f_try - f_prev) >= min_sep for f_prev in selected_freqs
-            ):
+            if all(abs(f_try - f_prev) >= min_sep for f_prev in selected_freqs):
                 f0 = f_try
                 break
 
@@ -133,9 +130,7 @@ def fit_sine_parameters(
 
         f0 = apply_bounds(f0, freq_prior)
 
-        amplitude, phase, component = _fit_component_at_frequency(
-            residual, t, f0
-        )
+        amplitude, phase, component = _fit_component_at_frequency(residual, t, f0)
         if "value" in amp_prior:
             amplitude = float(amp_prior["value"])
         amplitude = apply_bounds(amplitude, amp_prior)
@@ -162,9 +157,7 @@ def fit_sine_parameters(
     return components
 
 
-def sine_model(
-    ts: TimeSeries, components: list[dict[str, float]]
-) -> TimeSeries:
+def sine_model(ts: TimeSeries, components: list[dict[str, float]]) -> TimeSeries:
     t = np.arange(len(ts.data)) * ts.delta_t
     model = np.zeros_like(ts.data, dtype=float)
     for comp in components:
@@ -178,8 +171,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="gwaith_fit_sine",
         description=(
-            "Fit amplitude/frequency/phase and output signal timeseries "
-            "+ parameters."
+            "Fit amplitude/frequency/phase and output signal timeseries + parameters."
         ),
     )
     add_data_input_args(parser, data_help="Input HDF5 data file")
@@ -227,7 +219,7 @@ def main(argv: list[str] | None = None) -> int:
 
         prior_path = args.priors or args.init_params
         priors = load_prior_file(prior_path) if prior_path else {}
-        
+
         # Override frequency bounds if provided on command line
         if args.f_low is not None or args.f_high is not None:
             freq_prior = priors.get("frequency", {})
@@ -236,7 +228,7 @@ def main(argv: list[str] | None = None) -> int:
             if args.f_high is not None:
                 freq_prior["max"] = float(args.f_high)
             priors["frequency"] = freq_prior
-        
+
         components = fit_sine_parameters(data_ts, priors)
 
         signal_ts = sine_model(data_ts, components)

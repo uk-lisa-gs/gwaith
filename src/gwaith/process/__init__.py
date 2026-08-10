@@ -3,6 +3,7 @@
 This package exposes file-type-specific processors and a single helper to
 select the appropriate backend based on parsed CLI args.
 """
+
 import logging
 
 from gwaith.io import KeyValueOptionAction
@@ -10,12 +11,10 @@ from gwaith.io import KeyValueOptionAction
 from .ldc import process_ldc
 from .mojito import process_mojito
 
-logger = logging.getLogger('gwaith.process')
+logger = logging.getLogger("gwaith.process")
 
-PROCESSORS = {
-    'mojito': process_mojito,
-    'ldc': process_ldc
-}
+PROCESSORS = {"mojito": process_mojito, "ldc": process_ldc}
+
 
 def process(parser, args, processor_name=None):
     """Dispatch to the selected processing backend.
@@ -39,21 +38,17 @@ def process(parser, args, processor_name=None):
     return backend(parser, args)
 
 
-
 def add_data_processing_args(parser):
-    grp = parser.add_argument_group('processor')
+    grp = parser.add_argument_group("processor")
     parser.add_argument(
-        '--processor',
+        "--processor",
         choices=list(PROCESSORS.keys()),
     )
     grp.add_argument(
-        '--processor-options',
-        nargs='+',
+        "--processor-options",
+        nargs="+",
         action=KeyValueOptionAction,
         default={},
-        help='Processor-specific keyword options in key:value form, e.g.'
-             '--processor-options target_fs:0.2'
-        )
-    return None
-        
-
+        help="Processor-specific keyword options in key:value form, e.g."
+        "--processor-options target_fs:0.2",
+    )

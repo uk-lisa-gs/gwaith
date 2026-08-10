@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-from typing import Any, Union
+from typing import Any
 
 import numpy as np
+
 
 class Series:
     """A base class for series data."""
@@ -47,7 +48,7 @@ class Series:
         self._check_compatible(other)
         return self._new_from_data(self.data - other.data)
 
-    def __rsub__(self, other: Union[float, int, Series]) -> Series:
+    def __rsub__(self, other: float | Series) -> Series:
         if isinstance(other, (float, int)):
             return self._new_from_data(other - self.data)
         elif isinstance(other, self.__class__):
@@ -55,10 +56,10 @@ class Series:
             return other._new_from_data(other.data - self.data)
         return NotImplemented
 
-    def __getitem__(self, key: Union[int, slice]) -> Any:
+    def __getitem__(self, key: int | slice) -> Any:
         return self.data[key]
 
-    def __setitem__(self, key: Union[int, slice], value: Any) -> None:
+    def __setitem__(self, key: int | slice, value: Any) -> None:
         self.data[key] = value
 
     def __iadd__(self, other: Series) -> Series:
@@ -66,18 +67,18 @@ class Series:
         self.data += other.data
         return self
 
-    def __mul__(self, other: Union[float, int, Series]) -> Series:
+    def __mul__(self, other: float | Series) -> Series:
         if isinstance(other, (float, int)):
             return self._new_from_data(self.data * other)
         elif isinstance(other, self.__class__):
             self._check_compatible(other)
             return self._new_from_data(self.data * other.data)
         return NotImplemented
-    
-    def __rmul__(self, other: Union[float, int, Series]) -> Series:
+
+    def __rmul__(self, other: float | Series) -> Series:
         return self.__mul__(other)
 
-    def __truediv__(self, other: Union[float, int, Series]) -> Series:
+    def __truediv__(self, other: float | Series) -> Series:
         if isinstance(other, (float, int)):
             return self._new_from_data(self.data / other)
         elif isinstance(other, self.__class__):
@@ -85,7 +86,7 @@ class Series:
             return self._new_from_data(self.data / other.data)
         return NotImplemented
 
-    def __rtruediv__(self, other: Union[float, int, Series]) -> Series:
+    def __rtruediv__(self, other: float | Series) -> Series:
         if isinstance(other, (float, int)):
             return self._new_from_data(other / self.data)
         elif isinstance(other, self.__class__):
@@ -93,7 +94,7 @@ class Series:
             return other._new_from_data(other.data / self.data)
         return NotImplemented
 
-    def __pow__(self, other: Union[float, int, Series]) -> "Series":
+    def __pow__(self, other: float | Series) -> Series:
         if isinstance(other, (float, int)):
             return self._new_from_data(self.data**other)
         elif isinstance(other, self.__class__):
@@ -101,7 +102,7 @@ class Series:
             return self._new_from_data(self.data**other.data)
         return NotImplemented
 
-    def __rpow__(self, other: Union[float, int, Series]) -> "Series":
+    def __rpow__(self, other: float | Series) -> Series:
         if isinstance(other, (float, int)):
             return self._new_from_data(other**self.data)
         elif isinstance(other, self.__class__):
@@ -121,15 +122,15 @@ class Series:
         """Returns the imaginary part of the series."""
         return self._new_from_data(np.imag(self.data))
 
-    def conj(self) -> "Series":
+    def conj(self) -> Series:
         """Returns the complex conjugate of the series."""
         return self._new_from_data(np.conj(self.data))
 
-    def astype(self, dtype: np.dtype) -> "Series":
+    def astype(self, dtype: np.dtype) -> Series:
         """Casts the series to a specified type."""
         return self._new_from_data(self.data.astype(dtype))
 
-    def abs(self) -> "Series":
+    def abs(self) -> Series:
         """Returns a new Series with the absolute values of the data."""
         return self._new_from_data(np.abs(self.data))
 
@@ -145,6 +146,6 @@ class Series:
         """Returns the minimum value of the data."""
         return self.data.min()
 
-    def copy(self) -> "Series":
+    def copy(self) -> Series:
         """Returns a copy of the data."""
         return self._new_from_data(self.data.copy())

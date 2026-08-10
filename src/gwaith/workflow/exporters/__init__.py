@@ -6,7 +6,7 @@ import os
 from pathlib import Path
 
 from .bash_exporter import GwaithBashExporter
-from .exporter import GwaithExportResult, GwaithExporter
+from .exporter import GwaithExporter, GwaithExportResult
 
 _EXPORTER_ENV_VAR = "GWAITH_EXPORTER"
 
@@ -24,21 +24,21 @@ def get_exporter(name: str | None = None) -> GwaithExporter:
 
 
 def output_workflow(
-        workflow,
-        exporter: GwaithExporter | None = None,
+    workflow,
+    exporter: GwaithExporter | None = None,
 ):
     """Output a built workflow to disk using an exporter.
-    
+
     Args:
         workflow: Built GwaithWorkflow to export
         exporter: Exporter instance to use (defaults to environment selection)
-        
+
     Returns:
         GwaithWorkflow with manifest and master_script populated
     """
     if exporter is None:
         exporter = get_exporter()
-    
+
     target_dir = Path(workflow.workflow_dir)
     output = exporter.export(workflow, target_dir)
     workflow.manifest = output.manifest
@@ -47,9 +47,9 @@ def output_workflow(
 
 
 __all__ = [
+    "GwaithBashExporter",
     "GwaithExportResult",
     "GwaithExporter",
-    "GwaithBashExporter",
     "GwaithHTCondorExporter",
     "GwaithPegasusExporter",
     "GwaithSlurmExporter",

@@ -32,9 +32,7 @@ def main(argv: list[str] | None = None) -> int:
     add_signal_input_args(parser)
     add_data_output_args(parser)
     parser.add_argument(
-        '--channels',
-        required=True,
-        help='Data channels to perform the subtraction'
+        "--channels", required=True, help="Data channels to perform the subtraction"
     )
     add_gwaith_common_options(parser)
 
@@ -42,7 +40,6 @@ def main(argv: list[str] | None = None) -> int:
     init_logging(args.verbose)
 
     try:
-
         logger.info("Loading data from %s", args.data)
         data_ts = {
             channel: load_timeseries(args.data, dataset=channel)
@@ -52,9 +49,10 @@ def main(argv: list[str] | None = None) -> int:
         signals = []
         for sig_file in args.signal:
             logger.info("Loading signal from %s", sig_file)
-            signals.append({
-                channel: load_timeseries(sig_file, dataset=channel)
-                for channel in args.channels
+            signals.append(
+                {
+                    channel: load_timeseries(sig_file, dataset=channel)
+                    for channel in args.channels
                 }
             )
 

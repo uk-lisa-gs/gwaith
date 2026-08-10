@@ -1,12 +1,11 @@
 """Check an ongoing pegasus workflow.
-This will print the pegasus-status output for the workflow, and then this script fails if the 
+This will print the pegasus-status output for the workflow, and then this script fails if the
 pegasus jobs has failed. This way we can monitor an ongoing workflow."""
 
-import subprocess
-import time
-import sys
-
 import argparse
+import subprocess
+import sys
+import time
 
 parser = argparse.ArgumentParser()
 
@@ -14,7 +13,7 @@ parser.add_argument(
     "--time-delay",
     type=int,
     default=60,
-    help="How long to wait (seconds) between runs of pegasus-status"
+    help="How long to wait (seconds) between runs of pegasus-status",
 )
 
 args = parser.parse_args()
@@ -43,9 +42,10 @@ time.sleep(30)
 #       0       0       0       6       0       3       0  33.3
 # Summary: 3 DAGs total (Running:3)
 
+
 def check_status(lines: list[str]) -> str:
     """
-    Parses the list of lines from the output of pegasus-status and 
+    Parses the list of lines from the output of pegasus-status and
     returns the workflow status as a single string.
     Additional checks are in place for fast-failure scenarios.
 
@@ -63,7 +63,7 @@ def check_status(lines: list[str]) -> str:
     for line in lines:
         if line.startswith("Summary") and "(Failure" in line:
             print("Job Submission has failed 😭")
-            return 'FAILURE'
+            return "FAILURE"
 
     # Find the status summary line
     # This follows directly under the column header line which
@@ -71,21 +71,17 @@ def check_status(lines: list[str]) -> str:
     for i, line in enumerate(lines):
         if line.startswith("UNREADY"):
             if i + 1 < len(lines):
-                status_line = lines[i+1]
+                status_line = lines[i + 1]
                 break
     else:
         # There should always be the UNREADY line, this indicates a problem
         # with this code itself, so raise an error
-        raise RuntimeError(
-            "No summary status line found in pegasus-status output."
-        )
+        raise RuntimeError("No summary status line found in pegasus-status output.")
 
     # parse the status line
     stats = status_line.split()
     if len(stats) != 8:
-        raise RuntimeError(
-            "Could not parse status line, expected exactly 8 columns"
-        )
+        raise RuntimeError("Could not parse status line, expected exactly 8 columns")
 
     unready = int(stats[0])
     ready = int(stats[1])
@@ -100,15 +96,15 @@ def check_status(lines: list[str]) -> str:
     if failure != 0:
         # Fast-fail if there have been any failures
         print("Workflow has failed 😭")
-        return 'FAILURE'
+        return "FAILURE"
 
     # If the workflow is finished, then these will all be zero
     finished = (unready + ready + pre + queued + post) == 0
     if finished and pc_done == "100.0":
-        return 'SUCCESS'
+        return "SUCCESS"
 
     # nothing has indicated that the workflow has finished, so carry on
-    return 'RUNNING'
+    return "RUNNING"
 
 
 while True:
@@ -118,7 +114,9 @@ while True:
     # Using text=True decodes stdout/stderr as text.
     result = subprocess.run(
         ["pegasus-status", "submitdir/work/"],
-        capture_output=True, text=True, check=False
+        capture_output=True,
+        text=True,
+        check=False,
     )
 
     # Lets print the results to the console
@@ -129,14 +127,16 @@ while True:
 
     status = check_status(lines)
 
-    if status == 'SUCCESS':
+    if status == "SUCCESS":
         print("Workflow has finished successfully 🎉")
         sys.exit(0)
-    elif status == 'FAILURE':
+    elif status == "FAILURE":
         # If this has failed, stop the workflow.
         subprocess.run(
             "export PEGASUS_UPDATE_PYTHONPATH=0; pegasus-remove submitdir/work/",
-            shell=True, check=False, capture_output=True
+            shell=True,
+            check=False,
+            capture_output=True,
         )
         # Wait to ensure it has fully finished before
         # uploading logs

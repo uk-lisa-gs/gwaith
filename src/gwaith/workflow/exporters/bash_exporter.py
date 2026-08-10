@@ -10,8 +10,7 @@ from typing import Any
 import yaml
 
 from ..types import GwaithFile, GwaithNode, GwaithStream, GwaithWorkflow
-from .exporter import GwaithExportResult, GwaithExporter
-
+from .exporter import GwaithExporter, GwaithExportResult
 
 _ROUND_TAG_TEMPLATE = "round_{round_index:03d}"
 _DEFAULT_DATASET = "data"
@@ -173,12 +172,18 @@ def _serialise_stream(gwaith_stream: GwaithStream) -> dict[str, Any]:
 class GwaithBashExporter(GwaithExporter):
     """Exporter that writes bash scripts and a manifest."""
 
-    def export(self, workflow: GwaithWorkflow, workflow_dir: Path) -> GwaithExportResult:
+    def export(
+        self, workflow: GwaithWorkflow, workflow_dir: Path
+    ) -> GwaithExportResult:
         workflow_dir.mkdir(parents=True, exist_ok=True)
         node_scripts = self._write_node_scripts(workflow, workflow_dir)
         finalize_scripts = self._write_finalize_scripts(workflow, workflow_dir)
-        master_script = self._write_master_script(workflow, workflow_dir, node_scripts, finalize_scripts)
-        manifest = self._write_manifest(workflow, workflow_dir, node_scripts, finalize_scripts, master_script)
+        master_script = self._write_master_script(
+            workflow, workflow_dir, node_scripts, finalize_scripts
+        )
+        manifest = self._write_manifest(
+            workflow, workflow_dir, node_scripts, finalize_scripts, master_script
+        )
         return GwaithExportResult(
             manifest=manifest,
             master_script=master_script,
@@ -186,7 +191,9 @@ class GwaithBashExporter(GwaithExporter):
             finalize_scripts=finalize_scripts,
         )
 
-    def _write_node_scripts(self, workflow_graph: GwaithWorkflow, workflow_dir: Path) -> dict[str, str]:
+    def _write_node_scripts(
+        self, workflow_graph: GwaithWorkflow, workflow_dir: Path
+    ) -> dict[str, str]:
         script_paths: dict[str, str] = {}
         for node in workflow_graph.nodes:
             if node.round_index is None:
@@ -194,11 +201,15 @@ class GwaithBashExporter(GwaithExporter):
             else:
                 script_dir = workflow_dir / _round_tag(node.round_index) / "scripts"
             script_path = script_dir / f"{_safe_name(node.name)}.sh"
-            _write_executable(script_path, _script_header() + _render_command(node.command))
+            _write_executable(
+                script_path, _script_header() + _render_command(node.command)
+            )
             script_paths[node.uid] = str(script_path)
         return script_paths
 
-    def _write_finalize_scripts(self, workflow_graph: GwaithWorkflow, workflow_dir: Path) -> dict[str, str]:
+    def _write_finalize_scripts(
+        self, workflow_graph: GwaithWorkflow, workflow_dir: Path
+    ) -> dict[str, str]:
         final_dir = workflow_dir / "final"
         final_dir.mkdir(parents=True, exist_ok=True)
         scripts: dict[str, str] = {}
@@ -212,7 +223,9 @@ class GwaithBashExporter(GwaithExporter):
         for stream_uid, file_uid in workflow_graph.final_params.items():
             if file_uid is None:
                 continue
-            module_params.extend(["--module-param", f"{stream_uid}={file_by_uid[file_uid].path}"])
+            module_params.extend(
+                ["--module-param", f"{stream_uid}={file_by_uid[file_uid].path}"]
+            )
         consolidate_command = [
             "gwaith_consolidate_params",
             "--round",
@@ -221,7 +234,9 @@ class GwaithBashExporter(GwaithExporter):
             "--output",
             str(consolidated_output),
         ]
-        _write_executable(consolidate_path, _script_header() + _render_command(consolidate_command))
+        _write_executable(
+            consolidate_path, _script_header() + _render_command(consolidate_command)
+        )
         scripts["consolidate"] = str(consolidate_path)
 
         final_noise_file_uid = workflow_graph.final_noise_file
@@ -241,15 +256,24 @@ class GwaithBashExporter(GwaithExporter):
                 "--output-dataset",
                 noise_file.dataset or _DEFAULT_PSD_DATASET,
             ]
-            _write_executable(final_noise_path, _script_header() + _render_command(final_noise_command))
+            _write_executable(
+                final_noise_path,
+                _script_header() + _render_command(final_noise_command),
+            )
             scripts["final_noise"] = str(final_noise_path)
 
         return scripts
 
-    def _write_master_script(self, workflow_graph: GwaithWorkflow, workflow_dir: Path, node_scripts: dict[str, str], finalize_scripts: dict[str, str]) -> str:
+    def _write_master_script(
+        self,
+        workflow_graph: GwaithWorkflow,
+        workflow_dir: Path,
+        node_scripts: dict[str, str],
+        finalize_scripts: dict[str, str],
+    ) -> str:
         state_file_path = workflow_dir / "job_state.tsv"
         max_retries = 3
-        
+
         with open(state_file_path, "w", encoding="utf-8") as state_f:
             for entry in workflow_graph.round_entries:
                 for node_uid in entry["fit_nodes"]:
@@ -269,14 +293,23 @@ class GwaithBashExporter(GwaithExporter):
             rel_path = Path(finalize_scripts["consolidate"]).relative_to(workflow_dir)
             state_f.write(f"finalize_consolidate\tRETRY\t{max_retries}\t{rel_path}\n")
             if "final_noise" in finalize_scripts:
-                rel_path = Path(finalize_scripts["final_noise"]).relative_to(workflow_dir)
+                rel_path = Path(finalize_scripts["final_noise"]).relative_to(
+                    workflow_dir
+                )
                 state_f.write(f"finalize_noise\tRETRY\t{max_retries}\t{rel_path}\n")
 
         master_path = workflow_dir / "run_workflow.sh"
         _write_executable(master_path, _CONTROLLER_SCRIPT)
         return str(master_path)
 
-    def _write_manifest(self, workflow_graph: GwaithWorkflow, workflow_dir: Path, node_scripts: dict[str, str], finalize_scripts: dict[str, str], master_script: str) -> str:
+    def _write_manifest(
+        self,
+        workflow_graph: GwaithWorkflow,
+        workflow_dir: Path,
+        node_scripts: dict[str, str],
+        finalize_scripts: dict[str, str],
+        master_script: str,
+    ) -> str:
         file_by_uid = _file_lookup(workflow_graph)
         node_by_uid = _node_lookup(workflow_graph)
         stream_by_uid = {stream.uid: stream for stream in workflow_graph.streams}
@@ -288,8 +321,7 @@ class GwaithBashExporter(GwaithExporter):
             },
             "input": workflow_graph.input,
             "streams": {
-                uid: _serialise_stream(stream)
-                for uid, stream in stream_by_uid.items()
+                uid: _serialise_stream(stream) for uid, stream in stream_by_uid.items()
             },
             "nodes": {
                 uid: {
@@ -312,5 +344,7 @@ class GwaithBashExporter(GwaithExporter):
             "master_script": master_script,
         }
         manifest_path = workflow_dir / "workflow_manifest.yaml"
-        manifest_path.write_text(yaml.safe_dump(manifest, sort_keys=False), encoding="utf-8")
+        manifest_path.write_text(
+            yaml.safe_dump(manifest, sort_keys=False), encoding="utf-8"
+        )
         return str(manifest_path)

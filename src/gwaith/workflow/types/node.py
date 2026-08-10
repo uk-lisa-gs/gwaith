@@ -17,7 +17,7 @@ class GwaithNode:
         self.command = []
         # Keeping track of which round this node belongs to
         self.round_index = round_index
-        # the id of the stream that the node is within 
+        # the id of the stream that the node is within
         self.stream = stream_uid
         # Human readable name
         self.name = name or uid

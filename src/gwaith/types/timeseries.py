@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
-from typing import Any, Union
-import numpy as np
-import numpy.fft as fft
 import h5py
+import numpy as np
+from numpy import fft
 
 from .series import Series
 
@@ -41,7 +40,7 @@ class TimeSeries(Series):
             f"n_samples={len(self.data)})"
         )
 
-    def __getitem__(self, key: Union[int, slice]) -> Union[Any, "TimeSeries"]:
+    def __getitem__(self, key: int | slice) -> Any | TimeSeries:
         if isinstance(key, int):
             return self.data[key]
         elif isinstance(key, slice):
@@ -58,15 +57,13 @@ class TimeSeries(Series):
         if self.epoch != other.epoch:
             raise ValueError(f"epoch mismatch: {self.epoch} != {other.epoch}")
         if self.delta_t != other.delta_t:
-            raise ValueError(
-                f"delta_t mismatch: {self.delta_t} != {other.delta_t}"
-            )
+            raise ValueError(f"delta_t mismatch: {self.delta_t} != {other.delta_t}")
 
-    def to_timeseries(self) -> "TimeSeries":
+    def to_timeseries(self) -> TimeSeries:
         """Returns a copy of the timeseries."""
         return TimeSeries(self.data, self.epoch, self.delta_t)
 
-    def to_frequencyseries(self) -> "FrequencySeries":
+    def to_frequencyseries(self) -> FrequencySeries:
         """Computes the Fourier transform of the timeseries."""
         from .frequencyseries import FrequencySeries
 
@@ -74,11 +71,9 @@ class TimeSeries(Series):
         freq_data = fft.rfft(self.data)
         f0 = 0.0
         delta_f = 1.0 / (n * self.delta_t)
-        return FrequencySeries(
-            freq_data, delta_f=delta_f, f0=f0, epoch=self.epoch
-        )
+        return FrequencySeries(freq_data, delta_f=delta_f, f0=f0, epoch=self.epoch)
 
-    def psd(self, segment_duration: float) -> "FrequencySeries":
+    def psd(self, segment_duration: float) -> FrequencySeries:
         """
         Estimates the power spectral density (PSD) of the timeseries using
         Welch's method.
@@ -110,12 +105,12 @@ class TimeSeries(Series):
 
         # Normalise
         # Hanning window squared and summed
-        win_norm = np.sum(np.hanning(segment_length)**2)
-        avg_psd *= 2 / (win_norm * (1/self.delta_t))
+        win_norm = np.sum(np.hanning(segment_length) ** 2)
+        avg_psd *= 2 / (win_norm * (1 / self.delta_t))
 
         return FrequencySeries(avg_psd, delta_f=delta_f, f0=f0, epoch=self.epoch)
 
-    def cyclic_time_shift(self, seconds: float) -> "TimeSeries":
+    def cyclic_time_shift(self, seconds: float) -> TimeSeries:
         """Cyclically shifts the timeseries by a given number of seconds."""
         shift = int(seconds / self.delta_t)
         shifted_data = np.roll(self.data, shift)
@@ -142,7 +137,7 @@ class TimeSeries(Series):
             group.attrs["delta_t"] = self.delta_t
 
     @classmethod
-    def load(cls, filepath: str, dataset_name: str | None = None) -> "TimeSeries":
+    def load(cls, filepath: str, dataset_name: str | None = None) -> TimeSeries:
         """Load a TimeSeries from an HDF5 file.
 
         Parameters
