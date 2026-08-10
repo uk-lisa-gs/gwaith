@@ -7,10 +7,10 @@ import logging
 
 from gwaith import add_gwaith_common_options, init_logging
 from gwaith.config import GwaithConfigParser, add_config_input_options
-from gwaith.types import GwaithFile
 from gwaith.workflow import (
-    add_workflow_input_options,
     build_workflow,
+    GwaithFile,
+    GwaithWorkflow,
 )
 from gwaith.workflow.exporters import get_exporter, output_workflow
 
@@ -23,7 +23,7 @@ def main(argv: list[str] | None = None) -> int:
         description="Generate LISA global fit GWAITH workflow from config.",
     )
     add_gwaith_common_options(parser)
-    add_workflow_input_options(parser)
+    GwaithWorkflow.add_input_options(parser)
     add_config_input_options(parser)
 
     args = parser.parse_args(argv)

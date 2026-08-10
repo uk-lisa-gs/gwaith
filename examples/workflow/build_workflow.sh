@@ -1,4 +1,4 @@
-gwaith_build_example_workflow \
+gwaith_build_global_fit_workflow \
     --workflow-name test_workflow \
     --workflow-dir workflow_out \
     --config-files \

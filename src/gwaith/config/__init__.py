@@ -3,11 +3,11 @@
 from pathlib import Path
 from typing import Any
 
-from .ini_config import _load_ini_data, _write_ini_data
+from .ini_config import load_ini_data, write_ini_data
 from .parser import GwaithConfigParser, add_config_input_options
 from .types import GwaithConfig
 from .utils import get_dict_value, resolve_match, safe_update
-from .yaml_config import _load_yaml_data, _write_yaml_data
+from .yaml_config import load_yaml_data, write_yaml_data
 
 __all__ = [
     "GwaithConfig",
@@ -36,10 +36,10 @@ def write_config(filepath: str | Path, config: dict[str, Any]) -> None:
     """
     suffix = Path(filepath).suffix.lower()
     if suffix in (".yaml", ".yml"):
-        _write_yaml_data(filepath, config)
+        write_yaml_data(filepath, config)
         return
     elif suffix in (".ini"):
-        _write_ini_data(filepath, config)
+        write_ini_data(filepath, config)
         return
     raise ValueError(
         f"Unsupported config format: {suffix!r}. Supported formats: .yaml, .yml, .ini"
@@ -62,9 +62,9 @@ def load_config(filepath: str | Path) -> dict[str, Any]:
     """
     suffix = Path(filepath).suffix.lower()
     if suffix in (".yaml", ".yml"):
-        return _load_yaml_data(filepath)
+        return load_yaml_data(filepath)
     elif suffix in (".ini"):
-        return _load_ini_data(filepath)
+        return load_ini_data(filepath)
     raise ValueError(
         f"Unsupported config format: {suffix!r}. Supported formats: .yaml, .yml, .ini"
     )

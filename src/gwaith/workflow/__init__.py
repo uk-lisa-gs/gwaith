@@ -11,7 +11,6 @@ __all__ = [
     "GwaithNode",
     "GwaithStream",
     "GwaithWorkflow",
-    "add_workflow_input_options",
     "build_workflow",
     "build_workflow_graph",
     "make_file_uid",

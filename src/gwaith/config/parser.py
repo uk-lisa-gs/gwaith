@@ -50,7 +50,7 @@ class GwaithConfigParser:
         self._config_base_dir = Path(self.input_files[0]).expanduser().resolve().parent
         self.args = args
         self.file_types = self.config_file_types()
-        self._data = self.read_config(args.config_files)
+        self._data = self.read_config()
         self.normalise()
 
     @classmethod
@@ -107,24 +107,16 @@ class GwaithConfigParser:
                 raise ValueError("Unknown config file type")
         return file_types
 
-    def read_config(self, _):
+    def read_config(self):
         config_dict = {}
-        yaml_files = [
-            f
-            for f, t in zip(self.input_files, self.file_types, strict=True)
-            if t == "yaml"
-        ]
-        ini_files = [
-            f
-            for f, t in zip(self.input_files, self.file_types, strict=True)
-            if t == "ini"
-        ]
 
-        if yaml_files:
-            safe_update(config_dict, load_yaml_data(yaml_files))
-
-        if ini_files:
-            safe_update(config_dict, load_ini_data(ini_files))
+        for file, file_type in zip(self.input_files, self.file_types, strict=True):
+            if file_type == "yaml":
+                data = load_yaml_data(file)
+                safe_update(config_dict, data)
+            elif file_type == "ini":
+                data = load_ini_data(file)
+                safe_update(config_dict, data)
 
         return config_dict
 

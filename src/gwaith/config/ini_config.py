@@ -9,13 +9,10 @@ from typing import Any
 logger = logging.getLogger("gwaith.config.ini")
 
 
-def _load_ini_data(paths: str | Path | Sequence[str | Path]) -> dict[str, Any]:
-    """Load INI config file(s) and consolidate them into a single dictionary."""
-    if isinstance(paths, (str, Path)):
-        paths = [paths]
-
+def load_ini_data(path: str | Path) -> dict[str, Any]:
+    """Load an INI config file into a dictionary."""
     parser = ConfigParser()
-    read_files = parser.read(paths)
+    read_files = parser.read(path)
     logger.info(f"Loading INI Config from: {read_files}")
 
     # Convert ConfigParser object to a dictionary
@@ -32,7 +29,7 @@ def _load_ini_data(paths: str | Path | Sequence[str | Path]) -> dict[str, Any]:
     return config
 
 
-def _write_ini_data(data: dict[str, Any], output_path: str | Path) -> None:
+def write_ini_data(data: dict[str, Any], output_path: str | Path) -> None:
     """Write config data to an INI file."""
     parser = ConfigParser()
     for section, section_data in data.items():
@@ -46,4 +43,4 @@ def _write_ini_data(data: dict[str, Any], output_path: str | Path) -> None:
         parser.write(f)
 
 
-__all__ = ["_load_ini_data", "_write_ini_data"]
+__all__ = ["load_ini_data", "write_ini_data"]
