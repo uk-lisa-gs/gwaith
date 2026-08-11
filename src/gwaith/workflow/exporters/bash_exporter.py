@@ -133,7 +133,7 @@ def _node_lookup(workflow: GwaithWorkflow) -> dict[str, GwaithNode]:
 def _serialise_file(gwaith_file: GwaithFile) -> dict[str, Any]:
     return {
         "uid": gwaith_file.uid,
-        "path": gwaith_file.path,
+        "path": gwaith_file.local_path,
         "final_path": gwaith_file.final_path,
         "dataset": gwaith_file.dataset,
         "kind": gwaith_file.kind,
@@ -224,7 +224,7 @@ class GwaithBashExporter(GwaithExporter):
             if file_uid is None:
                 continue
             module_params.extend(
-                ["--module-param", f"{stream_uid}={file_by_uid[file_uid].path}"]
+                ["--module-param", f"{stream_uid}={file_by_uid[file_uid].local_path}"]
             )
         consolidate_command = [
             "gwaith_consolidate_params",
@@ -244,11 +244,11 @@ class GwaithBashExporter(GwaithExporter):
             final_noise_path = scripts_dir / "finalize_noise_estimate.sh"
             residual_file = file_by_uid[workflow_graph.final_residual_file]
             noise_file = file_by_uid[final_noise_file_uid]
-            final_noise_output = final_dir / Path(noise_file.path).name
+            final_noise_output = final_dir / Path(noise_file.local_path).name
             final_noise_command = [
                 "gwaith_estimate_psd",
                 "--data",
-                residual_file.path,
+                residual_file.local_path,
                 "--data-dataset",
                 residual_file.dataset or _DEFAULT_DATASET,
                 "--output",

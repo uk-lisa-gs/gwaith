@@ -4,6 +4,7 @@ import argparse
 import importlib
 import inspect
 import logging
+import os
 from importlib.metadata import PackageNotFoundError, version
 
 __version__ = "0.1.0"
@@ -47,7 +48,7 @@ _LOG_DATEFMT = "%Y-%m-%dT%H:%M:%S%z"
 
 
 def init_logging(
-    verbosity: int = 0, default_level: int = 0, to_file: bool = False
+    verbosity: int = 0, default_level: int = 0, to_file: str | None = None
 ) -> int:
     """Initialize unified logging format and return selected level."""
     verbosity = verbosity + default_level
@@ -61,7 +62,8 @@ def init_logging(
     logger = logging.getLogger()
     logger.setLevel(level)
 
-    if to_file:
+    if to_file is not None:
+        os.makedirs(os.path.dirname(os.path.abspath(to_file)), exist_ok=True)
         handler = logging.FileHandler(to_file, mode="w")
     else:
         handler = logging.StreamHandler()

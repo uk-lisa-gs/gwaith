@@ -24,7 +24,7 @@ def get_exporter(name: str | None = None) -> GwaithExporter:
 
 
 def output_workflow(
-    workflow,
+    workflow: GwaithWorkflow,
     exporter: GwaithExporter | None = None,
 ):
     """Output a built workflow to disk using an exporter.

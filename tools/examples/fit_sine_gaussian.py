@@ -182,7 +182,7 @@ def fit_sine_gaussians(data_ts: TimeSeries, priors: dict) -> list[dict[str, floa
         instance_priors = priors[prior_key]
 
         logger.info("Fitting fixed-width sine-gaussian instance %d", instance_idx)
-        params = _fit_single_instance(residual, t, data_ts.delta_t, instance_priors)
+        params = _fit_single_instance(residual, t, instance_priors)
 
         if params is None:
             logger.warning("Failed to fit instance %d", instance_idx)
@@ -308,7 +308,7 @@ def main(argv: list[str] | None = None) -> int:
             "+ parameters."
         ),
     )
-    add_data_input_args(parser, data_help="Input HDF5 data file")
+    add_data_input_args(parser, data_help="Input HDF5 data file", dataset_option="--data-dataset")
     parser.add_argument(
         "--priors",
         required=False,

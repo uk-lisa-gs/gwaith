@@ -58,33 +58,102 @@ def add_data_input_args(
     data_option: str = "--data",
     data_required: bool = True,
     data_help: str = "Input HDF5 data file",
+    default_dataset: str = "data",
+    dataset_option: str | None = None,
 ) -> argparse._ArgumentGroup:
-    """Add standard data-input file and dataset CLI arguments."""
+    """Add standard data-input file and dataset CLI arguments.
+
+    Parameters
+    ----------
+    parser : ArgumentParser
+        The argument parser to add data input arguments to.
+    data_option : str
+        The name of the data file option (default: "--data").
+    data_required : bool
+        Whether the data file argument is required (default: True).
+    data_help : str
+        Help text for the data file argument.
+    default_dataset : str
+        The default dataset name (default: "data").
+    dataset_option : str | None
+        The name of the input dataset option. If None, no dataset argument
+        is added. This is needed when tools expect ``args.data_dataset``.
+    """
     grp = parser.add_argument_group("data input")
     grp.add_argument(
-        "--data-file",
-        required=True,
-        help="Input HDF5 data file containing original data",
+        data_option,
+        required=data_required,
+        help=data_help,
     )
     grp.add_argument(
         "--data-group",
         required=False,
         help="Group in the data hdf5 file which contains datasets for each channel",
     )
+    if dataset_option is not None:
+        grp.add_argument(
+            dataset_option,
+            required=False,
+            default=default_dataset,
+            help=f"Input dataset name (default: {default_dataset})",
+        )
     return grp
 
 
 def add_data_output_args(
     parser: argparse.ArgumentParser,
+    *,
+    output_option: str = "--output",
+    output_required: bool = True,
+    output_help: str = "Output HDF5 file",
+    default_dataset: str = "data",
+    dataset_option: str | None = None,
+    output_group_default: str | None = None,
 ) -> argparse._ArgumentGroup:
-    """Add standard data-output file and dataset CLI arguments."""
+    """Add standard data-output file and dataset CLI arguments.
+
+    Parameters
+    ----------
+    parser : ArgumentParser
+        The argument parser to add output arguments to.
+    output_option : str
+        The name of the output file option (default: "--output").
+    output_required : bool
+        Whether the output file argument is required (default: True). Set to
+        False for tools that can write to stdout when no output file is
+        specified.
+    output_help : str
+        Help text for the output file argument.
+    default_dataset : str
+        The default dataset name (default: "data").
+    dataset_option : str | None
+        The name of the output dataset option. If None, no dataset argument
+        is added. This is needed when tools expect ``args.output_dataset``.
+    output_group_default : str | None
+        The default value for the output-group option. If None, no group
+        argument is added. This is needed when tools expect
+        ``args.output_group``.
+    """
     grp = parser.add_argument_group("data output")
-    grp.add_argument("--output-filename", required=True, help="Output HDF5 file")
     grp.add_argument(
-        "--output-group",
-        required=False,
-        help="Output datasets into this group in the output hdf5 file - default is to use the file root group",
+        output_option,
+        required=output_required,
+        help=output_help,
     )
+    if output_group_default is not None:
+        grp.add_argument(
+            "--output-group",
+            required=False,
+            default=output_group_default,
+            help="Output datasets into this group in the output hdf5 file - default is to use the file root group",
+        )
+    if dataset_option is not None:
+        grp.add_argument(
+            dataset_option,
+            required=False,
+            default=default_dataset,
+            help=f"Output dataset name (default: {default_dataset})",
+        )
     return grp
 
 

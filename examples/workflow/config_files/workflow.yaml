@@ -11,7 +11,6 @@ executables:
   noise: gwaith_estimate_psd
   offset: gwaith_fit_offset
   processor: gwaith_process_data
-  # sine_gaussian: gwaith_fit_sine_gaussian
 
 default_resources:
     cpus: 1

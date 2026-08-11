@@ -180,7 +180,7 @@ def _build_cli_args(
 def _serialise_file(gwaith_file: GwaithFile) -> dict[str, Any]:
     return {
         "uid": gwaith_file.uid,
-        "path": gwaith_file.path,
+        "path": gwaith_file.local_path,
         "final_path": gwaith_file.final_path,
         "dataset": gwaith_file.dataset,
         "kind": gwaith_file.kind,
@@ -295,7 +295,7 @@ def _parse_config(
         "name": name,
         "workflow_dir": target_dir,
         "rounds": rounds,
-        "input_file": _as_path(input_file) if input_file else "data.hdf",
+        "input_file": _as_path(input_file) if input_file else None,
         "input_dataset": input_dataset,
         "global_retention_level": workflow_cfg.get("global-retention-level"),
         "signal_streams": signal_streams,
@@ -330,7 +330,7 @@ def build_workflow_graph(
     original_data_uid = make_file_uid("processor", None, "input_data")
     original_data_file = GwaithFile(
         uid=original_data_uid,
-        path=cfg["input_file"],
+        local_path=cfg["input_file"],
         final_path=cfg["input_file"],
         dataset=cfg["input_dataset"],
         kind="input_data",
@@ -385,7 +385,7 @@ def build_workflow_graph(
             prior_uid = make_file_uid(stream_uid, None, "initial_prior")
             prior_file = GwaithFile(
                 uid=prior_uid,
-                path=_as_path(initial_prior),
+                local_path=_as_path(initial_prior),
                 final_path=_as_path(initial_prior),
                 dataset=None,
                 kind="initial_prior",
@@ -457,12 +457,12 @@ def build_workflow_graph(
             command = [
                 stream_cfg["executable"],
                 "--data",
-                input_file.path,
+                input_file.local_path,
                 "--data-dataset",
                 input_file.dataset or _DEFAULT_DATASET,
             ]
             if prior_uid:
-                command.extend(["--priors", files[prior_uid].path])
+                command.extend(["--priors", files[prior_uid].local_path])
             command.extend(
                 _build_cli_args(
                     stream_cfg["options"],
@@ -494,7 +494,7 @@ def build_workflow_graph(
                 output_path = output_paths[output_id]
                 output_file = GwaithFile(
                     uid=output_uid,
-                    path=output_path,
+                    local_path=output_path,
                     final_path=output_path,
                     produced_by=fit_node_uid,
                     retention_level=cfg["global_retention_level"],
@@ -510,7 +510,7 @@ def build_workflow_graph(
 
             likelihood_file = GwaithFile(
                 uid=likelihood_uid,
-                path=likelihood_path,
+                local_path=likelihood_path,
                 final_path=likelihood_path,
                 produced_by=fit_node_uid,
                 retention_level=cfg["global_retention_level"],
@@ -559,12 +559,12 @@ def build_workflow_graph(
             residual_command = [
                 cfg["subtraction"]["executable"],
                 "--data",
-                files[original_data_uid].path,
+                files[original_data_uid].local_path,
                 "--data-dataset",
                 files[original_data_uid].dataset or _DEFAULT_DATASET,
             ]
             for signal_uid in residual_signal_uids:
-                residual_command.extend(["--signal", files[signal_uid].path])
+                residual_command.extend(["--signal", files[signal_uid].local_path])
             for signal_uid in residual_signal_uids:
                 residual_command.extend(
                     [
@@ -577,11 +577,11 @@ def build_workflow_graph(
                 ["--output", residual_path, "--output-dataset", _DEFAULT_DATASET]
             )
         else:
-            residual_command = ["cp", files[original_data_uid].path, residual_path]
+            residual_command = ["cp", files[original_data_uid].local_path, residual_path]
         residual_node.command = residual_command
         residual_file = GwaithFile(
             uid=residual_uid,
-            path=residual_path,
+            local_path=residual_path,
             final_path=residual_path,
             produced_by=residual_node_uid,
             retention_level=cfg["global_retention_level"],
@@ -623,7 +623,7 @@ def build_workflow_graph(
 
             noise_file = GwaithFile(
                 uid=noise_uid,
-                path=noise_path,
+                local_path=noise_path,
                 final_path=noise_path,
                 produced_by=noise_node_uid,
                 retention_level=cfg["global_retention_level"],
@@ -668,6 +668,7 @@ def build_workflow_graph(
                     ].get(latest_signal_round, []):
                         if signal_uid in files:
                             other_signal_uids.append(signal_uid)
+
                 prep_node.uses.extend(other_signal_uids)
 
                 next_data_uid = make_file_uid(stream_uid, round_index + 1, "input_data")
@@ -675,16 +676,17 @@ def build_workflow_graph(
                     next_round_dir
                     / f"{_round_tag(round_index + 1)}_{stream_uid}_input_data.hdf"
                 )
+
                 if other_signal_uids:
                     prep_command = [
                         cfg["subtraction"]["executable"],
                         "--data",
-                        files[original_data_uid].path,
+                        files[original_data_uid].local_path,
                         "--data-dataset",
                         files[original_data_uid].dataset or _DEFAULT_DATASET,
                     ]
                     for signal_uid in other_signal_uids:
-                        prep_command.extend(["--signal", files[signal_uid].path])
+                        prep_command.extend(["--signal", files[signal_uid].local_path])
                     for signal_uid in other_signal_uids:
                         prep_command.extend(
                             [
@@ -702,12 +704,12 @@ def build_workflow_graph(
                         ]
                     )
                 else:
-                    prep_command = ["cp", files[original_data_uid].path, next_data_path]
+                    prep_command = ["cp", files[original_data_uid].local_path, next_data_path]
                 prep_node.command = prep_command
 
                 next_data_file = GwaithFile(
                     uid=next_data_uid,
-                    path=next_data_path,
+                    local_path=next_data_path,
                     final_path=next_data_path,
                     produced_by=prep_node_uid,
                     retention_level=cfg["global_retention_level"],
@@ -722,6 +724,8 @@ def build_workflow_graph(
                 streams["central"].nodes.append(prep_node_uid)
                 prep_nodes.append(prep_node_uid)
                 next_data_by_stream[stream_uid] = next_data_uid
+            else:
+                next_data_by_stream[stream_uid] = original_data_uid
 
         round_entries.append(
             {
@@ -771,14 +775,6 @@ def build_workflow(
     Returns:
             GwaithWorkflow
     """
-    from .pegasus_generator import build_pegasus_workflow
-
-    cfg = _parse_config(
+    return build_workflow_graph(
         config_parser, workflow_name=workflow_name, workflow_dir=workflow_dir
     )
-    pegasus_wf = build_pegasus_workflow(
-        config=config_parser,
-        workflow_name=cfg["name"],
-        workflow_dir=cfg["workflow_dir"],
-    )
-    return pegasus_wf

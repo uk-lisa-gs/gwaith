@@ -64,16 +64,31 @@ class GwaithConfigParser:
         """
         return cls(args)
 
-    def get(self, section, option, *, fallback=None, raw=False):
+    def get_section(self, section, *, fallback={}):
+        """Get all values from ``section`` as a dictionary."""
+        if section not in self._data:
+            logger.warning("Section %s not found, using fallback")
+            return fallback
+        if not isinstance(self._data[section], dict):
+            raise ValueError("Section %s is not a mapping" % section)
+        
+        return self._data[section]
+        
+
+    def get_option(self, option, *, section=None, fallback=False, raw=False):
         """Get a value from ``section.option``.
 
         If ``raw`` is true, interpolation is not applied.
         """
-        section_map = self._data.get(section)
-        if not isinstance(section_map, dict):
-            return fallback
+        if section is not None:
+            section_map = self.get_section(section)
+        else:
+            section_map = self._data
+
         if option not in section_map:
+            logger.warning("Option %s not found, using fallback")
             return fallback
+        
         value = section_map[option]
         if raw:
             return value
