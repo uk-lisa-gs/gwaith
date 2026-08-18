@@ -113,7 +113,7 @@ def test_frequencyseries_cyclic_time_shift():
     seconds_to_shift = 1.0
     shifted_fs = fs.cyclic_time_shift(seconds_to_shift)
 
-    expected_phase_shift = np.exp(2j * np.pi * fs.frequencies * seconds_to_shift)
+    expected_phase_shift = np.exp(-2j * np.pi * fs.frequencies * seconds_to_shift)
     expected_data = data * expected_phase_shift
 
     assert np.allclose(shifted_fs.data, expected_data)
@@ -131,7 +131,7 @@ def test_frequencyseries_cyclic_time_shift_preserves_epoch():
 
     shifted_fs = fs.cyclic_time_shift(3.7)
 
-    expected_phase_shift = np.exp(2j * np.pi * fs.frequencies * 3.7)
+    expected_phase_shift = np.exp(-2j * np.pi * fs.frequencies * 3.7)
     assert np.allclose(shifted_fs.data, data * expected_phase_shift)
     # Epoch must be unchanged by the cyclic time shift.
     assert shifted_fs.epoch == 42.0

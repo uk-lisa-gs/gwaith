@@ -95,7 +95,7 @@ class FrequencySeries(Series):
 
     def cyclic_time_shift(self, seconds: float) -> FrequencySeries:
         """Cyclically shifts the frequencyseries by a given number of seconds."""
-        phase_shift = np.exp(2j * np.pi * self.frequencies * seconds)
+        phase_shift = np.exp(-2j * np.pi * self.frequencies * seconds)
         shifted_data = self.data * phase_shift
         return self._new_from_data(shifted_data)
 
