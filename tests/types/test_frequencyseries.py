@@ -117,8 +117,27 @@ def test_frequencyseries_cyclic_time_shift():
     expected_data = data * expected_phase_shift
 
     assert np.allclose(shifted_fs.data, expected_data)
+    # The cyclic time shift applies a phase ramp to the frequency data but must
+    # leave the start epoch untouched: shifting in time does not move when the
+    # timeseries that produced these bins began.
     assert shifted_fs.epoch == fs.epoch
+    assert not isinstance(shifted_fs.epoch, np.floating)
     assert shifted_fs.delta_f == fs.delta_f
+
+
+def test_frequencyseries_cyclic_time_shift_preserves_epoch():
+    data = np.array([1.0 + 1j, 2.0 + 2j, 3.0 + 3j])
+    fs = FrequencySeries(data, delta_f=0.25, f0=0.0, epoch=42.0)
+
+    shifted_fs = fs.cyclic_time_shift(3.7)
+
+    expected_phase_shift = np.exp(2j * np.pi * fs.frequencies * 3.7)
+    assert np.allclose(shifted_fs.data, data * expected_phase_shift)
+    # Epoch must be unchanged by the cyclic time shift.
+    assert shifted_fs.epoch == 42.0
+    assert not isinstance(shifted_fs.epoch, np.floating)
+    assert shifted_fs.delta_f == fs.delta_f
+    assert shifted_fs.f0 == fs.f0
 
 
 def test_frequencyseries_conj():

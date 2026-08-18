@@ -58,10 +58,8 @@ def add_data_input_args(
     data_option: str = "--data",
     data_required: bool = True,
     data_help: str = "Input HDF5 data file",
-    default_dataset: str = "data",
-    dataset_option: str | None = None,
 ) -> argparse._ArgumentGroup:
-    """Add standard data-input file and dataset CLI arguments.
+    """Add standard data-input file CLI arguments.
 
     Parameters
     ----------
@@ -73,11 +71,6 @@ def add_data_input_args(
         Whether the data file argument is required (default: True).
     data_help : str
         Help text for the data file argument.
-    default_dataset : str
-        The default dataset name (default: "data").
-    dataset_option : str | None
-        The name of the input dataset option. If None, no dataset argument
-        is added. This is needed when tools expect ``args.data_dataset``.
     """
     grp = parser.add_argument_group("data input")
     grp.add_argument(
@@ -85,18 +78,6 @@ def add_data_input_args(
         required=data_required,
         help=data_help,
     )
-    grp.add_argument(
-        "--data-group",
-        required=False,
-        help="Group in the data hdf5 file which contains datasets for each channel",
-    )
-    if dataset_option is not None:
-        grp.add_argument(
-            dataset_option,
-            required=False,
-            default=default_dataset,
-            help=f"Input dataset name (default: {default_dataset})",
-        )
     return grp
 
 
@@ -106,11 +87,8 @@ def add_data_output_args(
     output_option: str = "--output",
     output_required: bool = True,
     output_help: str = "Output HDF5 file",
-    default_dataset: str = "data",
-    dataset_option: str | None = None,
-    output_group_default: str | None = None,
 ) -> argparse._ArgumentGroup:
-    """Add standard data-output file and dataset CLI arguments.
+    """Add standard data-output file CLI arguments.
 
     Parameters
     ----------
@@ -124,11 +102,6 @@ def add_data_output_args(
         specified.
     output_help : str
         Help text for the output file argument.
-    default_dataset : str
-        The default dataset name (default: "data").
-    dataset_option : str | None
-        The name of the output dataset option. If None, no dataset argument
-        is added. This is needed when tools expect ``args.output_dataset``.
     output_group_default : str | None
         The default value for the output-group option. If None, no group
         argument is added. This is needed when tools expect
@@ -140,20 +113,6 @@ def add_data_output_args(
         required=output_required,
         help=output_help,
     )
-    if output_group_default is not None:
-        grp.add_argument(
-            "--output-group",
-            required=False,
-            default=output_group_default,
-            help="Output datasets into this group in the output hdf5 file - default is to use the file root group",
-        )
-    if dataset_option is not None:
-        grp.add_argument(
-            dataset_option,
-            required=False,
-            default=default_dataset,
-            help=f"Output dataset name (default: {default_dataset})",
-        )
     return grp
 
 

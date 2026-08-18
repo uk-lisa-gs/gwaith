@@ -153,6 +153,36 @@ def _stream_runs_on_round(stream_cfg: dict[str, Any], round_index: int) -> bool:
     ] == 0
 
 
+def _is_hdf5_file(gwaith_file: GwaithFile) -> bool:
+    """Return True if the file is an HDF5 container (by path extension)."""
+    local_path = gwaith_file.local_path
+    if not local_path:
+        return False
+    return local_path.endswith(".hdf") or local_path.endswith(".hdf5")
+
+
+def _data_file_args(input_file: GwaithFile) -> list[str]:
+    """Return the CLI args to point a tool at the input file's data.
+
+    The flag names depend on the file type: HDF5 files are addressed with
+    ``--data-file``/``--data-group``, while JSON timeseries files (produced by
+    the subtraction step) are addressed with ``--timeseries-file``/
+    ``--timeseries-name``. Tools that accept both sets of options resolve to a
+    single input via ``_resolve_input_file``, so emitting only the relevant
+    pair keeps the command unambiguous.
+    """
+    if not input_file.local_path:
+        return []
+    if _is_hdf5_file(input_file):
+        return [
+            "--data-file",
+            input_file.local_path,
+            "--data-group",
+            input_file.dataset or _DEFAULT_DATASET,
+        ]
+    return ["--timeseries-file", input_file.local_path]
+
+
 def _build_cli_args(
     options: dict[str, Any], excluded: set[str] | None = None
 ) -> list[str]:
@@ -454,13 +484,7 @@ def build_workflow_graph(
                     / f"{round_tag}_{stream_uid}_{output_cfg['id']}.{output_cfg['extension']}"
                 )
 
-            command = [
-                stream_cfg["executable"],
-                "--data",
-                input_file.local_path,
-                "--data-dataset",
-                input_file.dataset or _DEFAULT_DATASET,
-            ]
+            command = [stream_cfg["executable"], *_data_file_args(input_file)]
             if prior_uid:
                 command.extend(["--priors", files[prior_uid].local_path])
             command.extend(
@@ -560,22 +584,13 @@ def build_workflow_graph(
                 cfg["subtraction"]["executable"],
                 "--data",
                 files[original_data_uid].local_path,
-                "--data-dataset",
-                files[original_data_uid].dataset or _DEFAULT_DATASET,
             ]
             for signal_uid in residual_signal_uids:
-                residual_command.extend(["--signal", files[signal_uid].local_path])
-            for signal_uid in residual_signal_uids:
                 residual_command.extend(
-                    [
-                        "--signal-dataset",
-                        files[signal_uid].dataset or _DEFAULT_SIGNAL_DATASET,
-                    ]
+                    ["--signal-files", files[signal_uid].local_path]
                 )
             residual_command.extend(_build_cli_args(cfg["subtraction"]["options"]))
-            residual_command.extend(
-                ["--output", residual_path, "--output-dataset", _DEFAULT_DATASET]
-            )
+            residual_command.extend(["--output", residual_path])
         else:
             residual_command = ["cp", files[original_data_uid].local_path, residual_path]
         residual_node.command = residual_command
@@ -613,13 +628,9 @@ def build_workflow_graph(
                 cfg["noise"]["executable"],
                 "--data",
                 residual_path,
-                "--data-dataset",
-                _DEFAULT_DATASET,
             ]
             noise_node.command.extend(_build_cli_args(cfg["noise"]["options"]))
-            noise_node.command.extend(
-                ["--output", noise_path, "--output-dataset", _DEFAULT_PSD_DATASET]
-            )
+            noise_node.command.extend(["--output", noise_path])
 
             noise_file = GwaithFile(
                 uid=noise_uid,
@@ -682,27 +693,13 @@ def build_workflow_graph(
                         cfg["subtraction"]["executable"],
                         "--data",
                         files[original_data_uid].local_path,
-                        "--data-dataset",
-                        files[original_data_uid].dataset or _DEFAULT_DATASET,
                     ]
                     for signal_uid in other_signal_uids:
-                        prep_command.extend(["--signal", files[signal_uid].local_path])
-                    for signal_uid in other_signal_uids:
                         prep_command.extend(
-                            [
-                                "--signal-dataset",
-                                files[signal_uid].dataset or _DEFAULT_SIGNAL_DATASET,
-                            ]
+                            ["--signal-files", files[signal_uid].local_path]
                         )
                     prep_command.extend(_build_cli_args(cfg["subtraction"]["options"]))
-                    prep_command.extend(
-                        [
-                            "--output",
-                            next_data_path,
-                            "--output-dataset",
-                            _DEFAULT_DATASET,
-                        ]
-                    )
+                    prep_command.extend(["--output", next_data_path])
                 else:
                     prep_command = ["cp", files[original_data_uid].local_path, next_data_path]
                 prep_node.command = prep_command

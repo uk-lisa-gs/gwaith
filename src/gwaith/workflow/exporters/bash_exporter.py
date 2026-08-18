@@ -17,6 +17,10 @@ _DEFAULT_DATASET = "data"
 _DEFAULT_SIGNAL_DATASET = "signal"
 _DEFAULT_PSD_DATASET = "psd"
 
+# The controller script is written as a raw string to preserve bash syntax.
+# It processes jobs from job_state.tsv, retrying failed jobs up to max_retries.
+# When a job exhausts all retries, it stays in RETRY state so it can be
+# retried on the next invocation of run_workflow.sh.
 _CONTROLLER_SCRIPT = r"""#!/usr/bin/env bash
 set -euo pipefail
 
@@ -30,7 +34,6 @@ if [[ ! -f "$STATE_FILE" ]]; then
     exit 1
 fi
 
-TEMP_STATE=$(mktemp)
 ALL_DONE=true
 
 # Read line by line. Using || [[ -n "$uid" ]] ensures we catch the last line even if there's no trailing newline
@@ -40,11 +43,12 @@ while IFS=$'\t' read -r uid status retries script_path || [[ -n "$uid" ]]; do
     fi
 
     if [[ "$status" == "DONE" ]]; then
-        printf "%s\t%s\t%s\t%s\n" "$uid" "$status" "$retries" "$script_path" >> "$TEMP_STATE"
+        printf "%s\t%s\t%s\t%s\n" "$uid" "$status" "$retries" "$script_path" >> "${STATE_FILE}.tmp"
         continue
     fi
 
     if [[ "$status" == "RETRY" ]]; then
+        # Attempt the job, decrementing retries on failure
         while [[ "$retries" -gt 0 ]]; do
             echo "Running job: $uid (Retries left: $retries)"
 
@@ -64,32 +68,34 @@ while IFS=$'\t' read -r uid status retries script_path || [[ -n "$uid" ]]; do
                 if [[ "$retries" -gt 0 ]]; then
                     echo "Retrying..."
                 else
-                    echo "No retries left for $uid. Marking as FAILED."
-                    status="FAILED"
+                    # No retries left - reset to RETRY 3 for next script invocation
+                    echo "No retries left for $uid. Resetting to RETRY 3 times."
+                    status="RETRY"
+                    retries=3
+                    break
                 fi
             fi
         done
 
-        printf "%s\t%s\t%s\t%s\n" "$uid" "$status" "$retries" "$script_path" >> "$TEMP_STATE"
+        printf "%s\t%s\t%s\t%s\n" "$uid" "$status" "$retries" "$script_path" >> "${STATE_FILE}.tmp"
 
+        # If the job didn't complete successfully, stop processing remaining jobs
+        # so they can pick up where we left off next time run_workflow.sh is called
         if [[ "$status" != "DONE" ]]; then
             ALL_DONE=false
-            # Output the remaining unexecuted jobs exactly as they are in the file to the temp state
-            cat >> "$TEMP_STATE"
             break
         fi
     else
         # FAILED or other unknown status, just carry it over and stop
-        printf "%s\t%s\t%s\t%s\n" "$uid" "$status" "$retries" "$script_path" >> "$TEMP_STATE"
+        printf "%s\t%s\t%s\t%s\n" "$uid" "$status" "$retries" "$script_path" >> "${STATE_FILE}.tmp"
         ALL_DONE=false
-        cat >> "$TEMP_STATE"
         break
     fi
 
 done < "$STATE_FILE"
 
 # Overwrite old state with updated states
-mv "$TEMP_STATE" "$STATE_FILE"
+mv "${STATE_FILE}.tmp" "$STATE_FILE"
 
 if [[ "$ALL_DONE" == false ]]; then
     echo "Workflow stopped. Check $STATE_FILE for details."

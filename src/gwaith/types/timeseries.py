@@ -26,8 +26,26 @@ class TimeSeries(Series):
 
     def __init__(self, data: np.ndarray, epoch: float, delta_t: float) -> None:
         super().__init__(data)
-        self.epoch = float(epoch)
-        self.delta_t = float(delta_t)
+        self.epoch = epoch
+        self.delta_t = delta_t
+
+    @property
+    def epoch(self) -> float:
+        """GPS start time of the first sample (seconds)."""
+        return self._epoch
+
+    @epoch.setter
+    def epoch(self, value: float) -> None:
+        self._epoch = float(value)
+
+    @property
+    def delta_t(self) -> float:
+        """Sample spacing (seconds)."""
+        return self._delta_t
+
+    @delta_t.setter
+    def delta_t(self, value: float) -> None:
+        self._delta_t = float(value)
 
     @property
     def sample_times(self) -> np.ndarray:

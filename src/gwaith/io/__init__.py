@@ -10,17 +10,12 @@ from .cli import (
     add_data_input_args,
     add_data_output_args,
     add_signal_input_args,
+    resolve_filenames_datasets,
 )
 from .hdf5 import (
     load_frequencyseries as load_frequencyseries_hdf5,
-)
-from .hdf5 import (
     load_timeseries as load_timeseries_hdf5,
-)
-from .hdf5 import (
     write_frequencyseries as write_frequencyseries_hdf5,
-)
-from .hdf5 import (
     write_timeseries as write_timeseries_hdf5,
 )
 

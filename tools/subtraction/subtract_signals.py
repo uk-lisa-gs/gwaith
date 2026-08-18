@@ -12,6 +12,7 @@ from gwaith.io import (
     add_data_output_args,
     add_signal_input_args,
     load_timeseries,
+    resolve_filenames_datasets,
     write_timeseries,
 )
 from gwaith.subtraction import subtract_signals
@@ -29,6 +30,9 @@ def main(argv: list[str] | None = None) -> int:
         ),
     )
     add_data_input_args(parser)
+    # Pass an explicit, unambiguous dataset option. Without this the helper
+    # defaults to "--signal-dataset", whose prefix collides with
+    # "--signal-files"/"--signal-groups" under argparse abbreviation matching.
     add_signal_input_args(parser)
     add_data_output_args(parser)
     parser.add_argument(
@@ -39,6 +43,9 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     init_logging(args.verbose)
 
+    if not args.signal_groups:
+        parser.error("--signal-groups is required")
+
     try:
         logger.info("Loading data from %s", args.data)
         data_ts = {
@@ -46,8 +53,11 @@ def main(argv: list[str] | None = None) -> int:
             for channel in args.channels
         }
 
+        signal_pairs = resolve_filenames_datasets(
+            args.signal_files, args.signal_groups
+        )
         signals = []
-        for sig_file in args.signal:
+        for sig_file, _dataset in signal_pairs:
             logger.info("Loading signal from %s", sig_file)
             signals.append(
                 {
@@ -58,11 +68,7 @@ def main(argv: list[str] | None = None) -> int:
 
         residual = subtract_signals(data_ts, signals, channels=args.channels)
 
-        logger.info(
-            "Writing residual to %s",
-            args.output,
-            args.output_dataset,
-        )
+        logger.info("Writing residual to %s", args.output)
         for channel in args.channels:
             logger.info("Channel %s", channel)
             write_timeseries(residual[channel], args.output, channel)

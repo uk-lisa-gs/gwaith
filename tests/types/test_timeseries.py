@@ -122,11 +122,51 @@ def test_timeseries_resize():
     assert np.array_equal(ts.data, np.array([1.0, 2.0, 3.0, 0.0, 0.0]))
 
 
+def test_timeseries_epoch_assignment_coerces_to_float():
+    ts = TimeSeries(np.array([1.0, 2.0, 3.0]), 0.0, 1.0)
+
+    # Assigning a numpy scalar must be stored as a plain Python float so it
+    # can never leak into HDF5 attributes as a compound dtype.
+    ts.epoch = np.float64(100.0)
+    assert isinstance(ts.epoch, float)
+    assert not isinstance(ts.epoch, np.floating)
+    assert ts.epoch == 100.0
+
+    # sample_times must reflect the new epoch immediately.
+    assert ts.sample_times[0] == 100.0
+    assert np.array_equal(ts.sample_times, np.array([100.0, 101.0, 102.0]))
+
+
+def test_timeseries_delta_t_assignment_coerces_to_float():
+    ts = TimeSeries(np.array([1.0, 2.0, 3.0]), 0.0, 1.0)
+
+    ts.delta_t = np.float64(0.5)
+    assert isinstance(ts.delta_t, float)
+    assert not isinstance(ts.delta_t, np.floating)
+    assert ts.delta_t == 0.5
+
+
 def test_timeseries_cyclic_time_shift():
     data = np.array([1.0, 2.0, 3.0, 4.0])
     ts = TimeSeries(data, 0.0, 1.0)
     shifted_ts = ts.cyclic_time_shift(2.0)  # Shift by 2 seconds (2 samples)
     assert np.array_equal(shifted_ts.data, np.array([3.0, 4.0, 1.0, 2.0]))
+    # The cyclic shift must preserve the start epoch: a circular roll of the
+    # sample data does not change when the timeseries begins.
+    assert shifted_ts.epoch == ts.epoch
+
+
+def test_timeseries_cyclic_time_shift_preserves_epoch():
+    ts = TimeSeries(np.array([1.0, 2.0, 3.0, 4.0]), epoch=1234.5, delta_t=0.2)
+    shifted_ts = ts.cyclic_time_shift(0.6)  # Shift by 3 samples
+
+    assert np.array_equal(shifted_ts.data, np.array([2.0, 3.0, 4.0, 1.0]))
+    # Epoch must be unchanged by the cyclic shift.
+    assert shifted_ts.epoch == 1234.5
+    assert not isinstance(shifted_ts.epoch, np.floating)
+    assert shifted_ts.delta_t == 0.2
+    # Sample times still begin at the original epoch.
+    assert shifted_ts.sample_times[0] == 1234.5
 
 
 def test_timeseries_real():
