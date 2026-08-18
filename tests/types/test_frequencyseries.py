@@ -140,6 +140,28 @@ def test_frequencyseries_cyclic_time_shift_preserves_epoch():
     assert shifted_fs.f0 == fs.f0
 
 
+def test_frequencyseries_cyclic_time_shift_matches_timeseries():
+    # A cyclic time shift applied in the frequency domain should be equivalent
+    # to shifting the original timeseries and re-transforming. Use a real signal
+    # so the rfft-based conversion produces a non-zero spectrum, and a shift of
+    # an integer number of samples so both paths are exact circular shifts.
+    data = np.array([0.0, 1.0, 0.0, -1.0, 2.0, -3.0, 0.5, 1.5])
+    ts = TimeSeries(data, epoch=0.0, delta_t=0.1)
+
+    shift_seconds = 3 * ts.delta_t  # 3 samples
+
+    # Path 1: shift in the frequency domain.
+    fs = ts.to_frequencyseries()
+    fs_shifted = fs.cyclic_time_shift(shift_seconds)
+
+    # Path 2: shift the timeseries, then convert back to frequency.
+    ts_shifted = ts.cyclic_time_shift(shift_seconds)
+    fs_from_ts = ts_shifted.to_frequencyseries()
+
+    assert np.allclose(fs_shifted.data, fs_from_ts.data)
+    assert fs_shifted.epoch == ts_shifted.epoch
+
+
 def test_frequencyseries_conj():
     data = np.array([1.0 + 1j, 2.0 + 2j])
     fs = FrequencySeries(data, delta_f=0.5)
