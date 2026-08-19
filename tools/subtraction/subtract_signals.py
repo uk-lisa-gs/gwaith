@@ -36,7 +36,10 @@ def main(argv: list[str] | None = None) -> int:
     add_signal_input_args(parser)
     add_data_output_args(parser)
     parser.add_argument(
-        "--channels", required=True, help="Data channels to perform the subtraction"
+        "--channels",
+        nargs='+',
+        required=True,
+        help="Data channels to perform the subtraction",
     )
     add_gwaith_common_options(parser)
 

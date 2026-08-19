@@ -1,6 +1,7 @@
 import numpy as np
 
 from gwaith.types import FrequencySeries, TimeSeries
+from .test_series import TestSeries
 
 
 def test_frequencyseries_init():
@@ -230,3 +231,10 @@ def test_frequencyseries_div_frequencyseries():
     fs2 = FrequencySeries(np.array([1.0 + 1j, 2.0 + 2j]), delta_f=0.5)
     fs_div = fs1 / fs2
     assert np.array_equal(fs_div.data, np.array([2.0, 2.0]))
+
+
+class TestFrequencySeries(TestSeries):
+    """Runs all base Series tests against a FrequencySeries."""
+
+    def make_series(self, data):
+        return FrequencySeries(data, delta_f=0.1)

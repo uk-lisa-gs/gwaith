@@ -134,6 +134,10 @@ class Series:
         """Returns a new Series with the absolute values of the data."""
         return self._new_from_data(np.abs(self.data))
 
+    def __abs__(self) -> Series:
+        """Supports the built-in abs() function."""
+        return self.abs()
+
     def max(self) -> float:
         """Returns the maximum value of the data."""
         return self.data.max()
@@ -145,6 +149,11 @@ class Series:
     def min(self) -> float:
         """Returns the minimum value of the data."""
         return self.data.min()
+
+    def __iter__(self):
+        """Supports iteration, enabling built-in max(), min(), sum()."""
+        for i in range(len(self.data)):
+            yield self.data[i]
 
     def copy(self) -> Series:
         """Returns a copy of the data."""

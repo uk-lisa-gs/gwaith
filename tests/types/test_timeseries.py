@@ -2,6 +2,7 @@ import numpy as np
 import pytest
 
 from gwaith.types import FrequencySeries, TimeSeries
+from .test_series import TestSeries
 
 
 def test_timeseries_init():
@@ -175,3 +176,10 @@ def test_timeseries_real():
     real_ts = ts.real()
     assert np.array_equal(real_ts.data, np.array([1.0, 2.0, 3.0]))
     assert isinstance(real_ts, TimeSeries)
+
+
+class TestTimeSeries(TestSeries):
+    """Runs all base Series tests against a TimeSeries."""
+
+    def make_series(self, data):
+        return TimeSeries(data, epoch=0.0, delta_t=1.0)

@@ -130,7 +130,7 @@ class TimeSeries(Series):
 
     def cyclic_time_shift(self, seconds: float) -> TimeSeries:
         """Cyclically shifts the timeseries by a given number of seconds."""
-        shift = int(seconds / self.delta_t)
+        shift = round(seconds / self.delta_t)
         shifted_data = np.roll(self.data, shift)
         return TimeSeries(shifted_data, self.epoch, self.delta_t)
 

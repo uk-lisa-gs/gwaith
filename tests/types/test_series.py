@@ -5,75 +5,132 @@ from gwaith.types import Series
 
 
 class TestSeries:
-    @pytest.fixture
-    def series_class(self):
-        return Series
+    """Base test class for Series and its subclasses.
 
-    @pytest.fixture
-    def series_data(self):
-        return np.array([1.0, 2.0, 3.0, 4.0])
+    Subclasses override ``make_series`` to instantiate their specific type,
+    which causes every test in this class to run against that type.
+    """
 
-    @pytest.fixture
-    def series(self, series_class, series_data):
-        if series_class == Series:
-            return series_class(series_data)
-        elif series_class.__name__ == "TimeSeries":
-            return series_class(series_data, epoch=0, delta_t=1)
-        elif series_class.__name__ == "FrequencySeries":
-            return series_class(series_data, f0=0, delta_f=1)
+    def make_series(self, data):
+        """Factory method – override in subclasses."""
+        return Series(data)
 
-    def test_series_init(self, series, series_data):
-        assert np.array_equal(series.data, series_data)
+    # ------------------------------------------------------------------
+    # Construction / basic protocol
+    # ------------------------------------------------------------------
 
-    def test_series_len(self, series, series_data):
-        assert len(series) == len(series_data)
+    def test_init(self):
+        data = np.array([1.0, 2.0, 3.0, 4.0])
+        s = self.make_series(data)
+        assert np.array_equal(s.data, data)
 
-    def test_series_getitem(self, series, series_data):
-        assert series[0] == series_data[0]
-        assert np.array_equal(series[1:3], series_data[1:3])
+    def test_len(self):
+        data = np.array([1.0, 2.0, 3.0, 4.0])
+        s = self.make_series(data)
+        assert len(s) == 4
 
-    def test_series_setitem(self, series, series_data):
-        series[0] = 10.0
-        assert series[0] == 10.0
-        series[1:3] = np.array([20.0, 30.0])
-        series_data[0] = 10.0
-        series_data[1:3] = np.array([20.0, 30.0])
-        assert np.array_equal(series.data, series_data)
+    def test_getitem_int(self):
+        data = np.array([1.0, 2.0, 3.0, 4.0])
+        s = self.make_series(data)
+        assert s[0] == 1.0
 
-    def test_series_add(self, series_class, series_data):
-        if series_class == Series:
-            s1 = series_class(series_data)
-            s2 = series_class(series_data)
-            s_sum = s1 + s2
-            assert np.array_equal(s_sum.data, series_data + series_data)
-            assert isinstance(s_sum, series_class)
-        elif series_class.__name__ == "TimeSeries":
-            s1 = series_class(series_data, epoch=0, delta_t=1)
-            s2 = series_class(series_data, epoch=0, delta_t=1)
-            s_sum = s1 + s2
-            assert np.array_equal(s_sum.data, series_data + series_data)
-            assert isinstance(s_sum, series_class)
-        elif series_class.__name__ == "FrequencySeries":
-            s1 = series_class(series_data, f0=0, delta_f=1)
-            s2 = series_class(series_data, f0=0, delta_f=1)
-            s_sum = s1 + s2
-            assert np.array_equal(s_sum.data, series_data + series_data)
-            assert isinstance(s_sum, series_class)
+    def test_getitem_slice(self):
+        data = np.array([1.0, 2.0, 3.0, 4.0])
+        s = self.make_series(data)
+        result = s[1:3]
+        assert isinstance(result, type(s))
+        assert np.array_equal(result.data, np.array([2.0, 3.0]))
 
-    def test_series_mul_scalar(self, series, series_data):
-        s_mul = series * 2.0
-        assert np.array_equal(s_mul.data, series_data * 2.0)
-        assert isinstance(s_mul, type(series))
+    def test_setitem_int(self):
+        data = np.array([1.0, 2.0, 3.0, 4.0])
+        s = self.make_series(data)
+        s[0] = 10.0
+        assert s[0] == 10.0
 
-    def test_series_real(self, series_class):
-        series_data = np.array([1.0 + 1j, 2.0 + 2j, 3.0 + 3j])
-        if series_class == Series:
-            s = series_class(series_data)
-        elif series_class.__name__ == "TimeSeries":
-            s = series_class(series_data, epoch=0, delta_t=1)
-        elif series_class.__name__ == "FrequencySeries":
-            s = series_class(series_data, f0=0, delta_f=1)
+    def test_setitem_slice(self):
+        data = np.array([1.0, 2.0, 3.0, 4.0])
+        s = self.make_series(data)
+        s[1:3] = np.array([20.0, 30.0])
+        assert np.array_equal(s.data, np.array([1.0, 20.0, 30.0, 4.0]))
 
+    # ------------------------------------------------------------------
+    # Arithmetic
+    # ------------------------------------------------------------------
+
+    def test_add(self):
+        data = np.array([1.0, 2.0, 3.0, 4.0])
+        s1 = self.make_series(data.copy())
+        s2 = self.make_series(data.copy())
+        s_sum = s1 + s2
+        assert isinstance(s_sum, type(s1))
+        assert np.array_equal(s_sum.data, data * 2)
+
+    def test_mul_scalar(self):
+        data = np.array([1.0, 2.0, 3.0, 4.0])
+        s = self.make_series(data)
+        s_mul = s * 2.0
+        assert isinstance(s_mul, type(s))
+        assert np.array_equal(s_mul.data, data * 2.0)
+
+    # ------------------------------------------------------------------
+    # Element-wise transforms
+    # ------------------------------------------------------------------
+
+    def test_real(self):
+        data = np.array([1.0 + 1j, 2.0 + 2j, 3.0 + 3j])
+        s = self.make_series(data)
         real_s = s.real()
+        assert isinstance(real_s, type(s))
         assert np.array_equal(real_s.data, np.array([1.0, 2.0, 3.0]))
-        assert isinstance(real_s, series_class)
+
+    # ------------------------------------------------------------------
+    # Built-in function support (abs, max, min, sum)
+    # ------------------------------------------------------------------
+
+    def test_abs_builtin(self):
+        data = np.array([-1.0, -2.0, 3.0, -4.0])
+        s = self.make_series(data)
+        result = abs(s)
+        assert isinstance(result, type(s))
+        assert np.array_equal(result.data, np.abs(data))
+
+    def test_max_builtin(self):
+        data = np.array([1.0, 5.0, 3.0, 2.0])
+        s = self.make_series(data)
+        assert max(s) == 5.0
+
+    def test_min_builtin(self):
+        data = np.array([1.0, 5.0, -3.0, 2.0])
+        s = self.make_series(data)
+        assert min(s) == -3.0
+
+    def test_sum_builtin(self):
+        data = np.array([1.0, 2.0, 3.0, 4.0])
+        s = self.make_series(data)
+        assert sum(s) == pytest.approx(10.0)
+
+    # ------------------------------------------------------------------
+    # Method form (series.abs(), series.max(), etc.)
+    # ------------------------------------------------------------------
+
+    def test_abs_method(self):
+        data = np.array([-1.0, -2.0, 3.0, -4.0])
+        s = self.make_series(data)
+        result = s.abs()
+        assert isinstance(result, type(s))
+        assert np.array_equal(result.data, np.abs(data))
+
+    def test_max_method(self):
+        data = np.array([1.0, 5.0, 3.0, 2.0])
+        s = self.make_series(data)
+        assert s.max() == 5.0
+
+    def test_min_method(self):
+        data = np.array([1.0, 5.0, -3.0, 2.0])
+        s = self.make_series(data)
+        assert s.min() == -3.0
+
+    def test_sum_method(self):
+        data = np.array([1.0, 2.0, 3.0, 4.0])
+        s = self.make_series(data)
+        assert s.sum() == pytest.approx(10.0)
