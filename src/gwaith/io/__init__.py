@@ -88,7 +88,7 @@ def write_timeseries(
         raise ValueError(f"Unknown format: {fmt}")
 
 
-def load_timeseries(filepath: str, dataset_name: str | None = None) -> TimeSeries:
+def load_timeseries(filepath: str, dataset: str | None = None) -> TimeSeries:
     """Load a TimeSeries from file, auto-detecting format from extension.
 
     Parameters
@@ -105,7 +105,7 @@ def load_timeseries(filepath: str, dataset_name: str | None = None) -> TimeSerie
     """
     fmt = get_format_from_filename(filepath)
     if fmt == "hdf5":
-        return load_timeseries_hdf5(filepath, dataset_name)
+        return load_timeseries_hdf5(filepath, dataset)
     else:
         raise ValueError(f"Unknown format: {fmt}")
 
