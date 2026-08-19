@@ -131,16 +131,7 @@ def add_signal_input_args(
         "the same dataset name shared over multiple files (i.e. one "
         "filename, multiple signal-datasets values) can be used.",
     )
-    grp.add_argument(
-        "--signal-groups",
-        nargs="+",
-        metavar="DATASET",
-        help=(
-            "Signal group name(s) in signal files; one per file or a single "
-            "value broadcast to file, or multiple values cast to a "
-            "single file"
-        ),
-    )
+
     return grp
 
 

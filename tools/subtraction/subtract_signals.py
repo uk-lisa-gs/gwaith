@@ -46,8 +46,6 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     init_logging(args.verbose)
 
-    if not args.signal_groups:
-        parser.error("--signal-groups is required")
 
     try:
         logger.info("Loading data from %s", args.data)
@@ -56,11 +54,8 @@ def main(argv: list[str] | None = None) -> int:
             for channel in args.channels
         }
 
-        signal_pairs = resolve_filenames_datasets(
-            args.signal_files, args.signal_groups
-        )
         signals = []
-        for sig_file, _dataset in signal_pairs:
+        for sig_file in args.signal_files:
             logger.info("Loading signal from %s", sig_file)
             signals.append(
                 {
