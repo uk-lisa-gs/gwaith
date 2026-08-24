@@ -7,6 +7,7 @@ All GWAITH HDF5 files carry ``epoch`` (GPS start time) and ``delta_t``
 from __future__ import annotations
 
 import h5py
+import os
 
 from gwaith.types import FrequencySeries, TimeSeries
 
@@ -63,29 +64,60 @@ def load_frequencyseries(
     return FrequencySeries(data=data, delta_f=delta_f, f0=f0, epoch=epoch)
 
 
+def _resolve_file_permission(filepath: str, file_permission: str | None) -> str:
+    """Resolve the h5py open mode for a write operation.
+
+    If ``file_permission`` is given it is used as-is (preferred over any
+    detection). Otherwise the mode is detected from the file: an existing
+    file is opened in append mode (``"a"``), a missing file in write mode
+    (``"w"``).
+    """
+    if file_permission is not None:
+        return file_permission
+    return "a" if os.path.exists(filepath) else "w"
+
+
 def write_timeseries(
-    ts: TimeSeries, filepath: str, dataset_name: str | None = None
+    ts: TimeSeries,
+    filepath: str,
+    dataset_name: str | None = None,
+    file_permission: str | None = None,
 ) -> None:
-    """Write a :class:`~gwaith.types.TimeSeries` to an HDF5 file."""
+    """Write a :class:`~gwaith.types.TimeSeries` to an HDF5 file.
+
+    Parameters
+    ----------
+    ts:
+        TimeSeries object to save.
+    filepath:
+        Path to output file.
+    dataset_name:
+        Name of the dataset in the file (default: 'timeseries').
+    file_permission:
+        h5py open mode to use ('w', 'a', 'r+'). If given, it is preferred
+        over detection; otherwise an existing file is opened in append mode
+        ('a') and a missing file in write mode ('w').
+    """
     actual_dataset_name = dataset_name if dataset_name is not None else "timeseries"
-    with h5py.File(filepath, "w") as f:
+    permission = _resolve_file_permission(filepath, file_permission)
+    with h5py.File(filepath, permission) as f:
         f.create_dataset(actual_dataset_name, data=ts.data)
         f.attrs["epoch"] = ts.epoch
         f.attrs["delta_t"] = ts.delta_t
 
 
 def write_frequencyseries(
-    series: FrequencySeries, filepath: str, dataset_name: str | None = None, **attrs
+    fseries: FrequencySeries, filepath: str, dataset_name: str | None = None, **attrs
 ) -> None:
     """Write a :class:`~gwaith.types.FrequencySeries` to an HDF5 file."""
     actual_dataset_name = (
         dataset_name if dataset_name is not None else "frequencyseries"
     )
     with h5py.File(filepath, "w") as f:
-        f.create_dataset(actual_dataset_name, data=series.data)
-        f.attrs["f0"] = series.f0
-        f.attrs["delta_f"] = series.delta_f
-        if hasattr(series, "epoch"):
-            f.attrs["epoch"] = series.epoch
+        f.create_dataset(actual_dataset_name, data=fseries.data)
+        f.attrs["f0"] = fseries.f0
+        f.attrs["delta_f"] = fseries.delta_f
+        if hasattr(fseries, "epoch"):
+            f.attrs["epoch"] = fseries.epoch
         for key, val in attrs.items():
             f.attrs[key] = val
