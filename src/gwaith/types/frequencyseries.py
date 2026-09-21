@@ -100,16 +100,36 @@ class FrequencySeries(Series):
         return self._new_from_data(shifted_data)
 
     def save(self, filepath: str, dataset_name: str | None = None) -> None:
-        """Write a FrequencySeries to an HDF5 file.
+        """Write a FrequencySeries to an HDF5 or plain text file.
+
+        If the filepath ends with '.txt', the series is written as a plain
+        text file using numpy's savetxt, with one row per frequency bin and
+        two columns (frequency in Hz, then the data value). Otherwise, the
+        series is written to an HDF5 file.
 
         Parameters
         ----------
         filepath : str
-            Path to the HDF5 file.
+            Path to the output file. A '.txt' extension triggers plain text
+            output; any other extension uses HDF5.
         dataset_name : str or None, optional
-            Name of the group to save the FrequencySeries into within the file.
-            If None, defaults to 'frequencyseries'.
+            Name of the group to save the FrequencySeries into within the
+            HDF5 file. If None, defaults to 'frequencyseries'. Ignored when
+            saving to a '.txt' file.
         """
+        if filepath.endswith(".txt"):
+            data = self.data
+            if np.iscomplexobj(data):
+                columns = np.column_stack(
+                    (self.frequencies, np.real(data), np.imag(data))
+                )
+                header = "# frequency [Hz] real_data imag_data"
+            else:
+                columns = np.column_stack((self.frequencies, data))
+                header = "# frequency [Hz] data"
+            np.savetxt(filepath, columns, header=header)
+            return
+
         name = "frequencyseries" if dataset_name is None else dataset_name
         with h5py.File(filepath, "a") as f:
             if name in f:

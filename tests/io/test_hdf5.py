@@ -67,3 +67,51 @@ def test_frequencyseries_save_and_load(tmp_path):
     assert np.array_equal(fs_loaded_no_epoch.data, data)
     assert fs_loaded_no_epoch.f0 == f0
     assert not hasattr(fs_loaded_no_epoch, "epoch")
+
+
+def test_frequencyseries_save_txt(tmp_path):
+    # Real-valued data: 2 columns (frequency, data)
+    data = np.array([1.0, 2.0, 3.0])
+    f0 = 0.5
+    delta_f = 0.5
+    fs_orig = FrequencySeries(data, delta_f=delta_f, f0=f0)
+
+    filepath = tmp_path / "test_fs.txt"
+    fs_orig.save(str(filepath))
+    assert filepath.exists()
+
+    loaded = np.loadtxt(str(filepath))
+    assert loaded.shape == (3, 2)
+    assert np.allclose(loaded[:, 0], np.array([0.5, 1.0, 1.5]))
+    assert np.allclose(loaded[:, 1], data)
+
+
+def test_frequencyseries_save_txt_complex(tmp_path):
+    # Complex data: 3 columns (frequency, real, imag)
+    data = np.array([1.0 + 1j, 2.0 + 2j])
+    f0 = 0.0
+    delta_f = 0.5
+    fs_orig = FrequencySeries(data, delta_f=delta_f, f0=f0)
+
+    filepath = tmp_path / "test_fs_complex.txt"
+    fs_orig.save(str(filepath))
+    assert filepath.exists()
+
+    loaded = np.loadtxt(str(filepath))
+    assert loaded.shape == (2, 3)
+    assert np.allclose(loaded[:, 0], np.array([0.0, 0.5]))
+    assert np.allclose(loaded[:, 1], np.real(data))
+    assert np.allclose(loaded[:, 2], np.imag(data))
+
+
+def test_frequencyseries_save_txt_ignores_dataset_name(tmp_path):
+    data = np.array([1.0, 2.0])
+    fs_orig = FrequencySeries(data, delta_f=0.5, f0=0.0)
+
+    filepath = tmp_path / "test_fs_named.txt"
+    # dataset_name is ignored for .txt output and should not raise
+    fs_orig.save(str(filepath), dataset_name="custom_data")
+    assert filepath.exists()
+
+    loaded = np.loadtxt(str(filepath))
+    assert loaded.shape == (2, 2)
