@@ -41,6 +41,12 @@ def main(argv: list[str] | None = None) -> int:
         required=True,
         help="Data channels to perform the subtraction",
     )
+    parser.add_argument(
+        "--no-overwrite",
+        action="store_true",
+        help="Error out if an output dataset with the same name already exists "
+        "in the output file (default: overwrite existing datasets)",
+    )
     add_gwaith_common_options(parser)
 
     args = parser.parse_args(argv)
@@ -69,7 +75,12 @@ def main(argv: list[str] | None = None) -> int:
         logger.info("Writing residual to %s", args.output)
         for channel in args.channels:
             logger.info("Channel %s", channel)
-            write_timeseries(residual[channel], args.output, channel)
+            write_timeseries(
+                residual[channel],
+                args.output,
+                channel,
+                overwrite=not args.no_overwrite,
+            )
         return 0
 
     except Exception as exc:

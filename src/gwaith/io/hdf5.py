@@ -82,6 +82,7 @@ def write_timeseries(
     filepath: str,
     dataset_name: str | None = None,
     file_permission: str | None = None,
+    overwrite: bool = True,
 ) -> None:
     """Write a :class:`~gwaith.types.TimeSeries` to an HDF5 file.
 
@@ -97,23 +98,63 @@ def write_timeseries(
         h5py open mode to use ('w', 'a', 'r+'). If given, it is preferred
         over detection; otherwise an existing file is opened in append mode
         ('a') and a missing file in write mode ('w').
+    overwrite:
+        If True (default), replace any existing dataset with the same name.
+        If False, raise an error when the dataset already exists.
     """
     actual_dataset_name = dataset_name if dataset_name is not None else "timeseries"
     permission = _resolve_file_permission(filepath, file_permission)
     with h5py.File(filepath, permission) as f:
+        if actual_dataset_name in f:
+            if not overwrite:
+                raise ValueError(
+                    f"Dataset '{actual_dataset_name}' already exists in {filepath}"
+                )
+            del f[actual_dataset_name]
         f.create_dataset(actual_dataset_name, data=ts.data)
         f.attrs["epoch"] = ts.epoch
         f.attrs["delta_t"] = ts.delta_t
 
 
 def write_frequencyseries(
-    fseries: FrequencySeries, filepath: str, dataset_name: str | None = None, **attrs
+    fseries: FrequencySeries,
+    filepath: str,
+    dataset_name: str | None = None,
+    file_permission: str | None = None,
+    overwrite: bool = True,
+    **attrs,
 ) -> None:
-    """Write a :class:`~gwaith.types.FrequencySeries` to an HDF5 file."""
+    """Write a :class:`~gwaith.types.FrequencySeries` to an HDF5 file.
+
+    Parameters
+    ----------
+    fseries:
+        FrequencySeries object to save.
+    filepath:
+        Path to output file.
+    dataset_name:
+        Name of the dataset in the file (default: 'frequencyseries').
+    file_permission:
+        h5py open mode to use ('w', 'a', 'r+'). If given, it is preferred
+        over detection; otherwise an existing file is opened in append mode
+        ('a') and a missing file in write mode ('w').
+    overwrite:
+        If True (default), replace any existing dataset with the same name.
+        If False, raise an error when the dataset already exists.
+    **attrs:
+        Additional attributes to store in the file.
+    """
     actual_dataset_name = (
         dataset_name if dataset_name is not None else "frequencyseries"
     )
-    with h5py.File(filepath, "w") as f:
+    permission = _resolve_file_permission(filepath, file_permission)
+    with h5py.File(filepath, permission) as f:
+        if actual_dataset_name in f:
+            if not overwrite:
+                raise ValueError(
+                    f"Dataset '{actual_dataset_name}' already exists in {filepath}"
+                )
+            del f[actual_dataset_name]
         f.create_dataset(actual_dataset_name, data=fseries.data)
         f.attrs["f0"] = fseries.f0
         f.attrs["delta_f"] = fseries.delta_f

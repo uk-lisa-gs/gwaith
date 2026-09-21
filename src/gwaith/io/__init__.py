@@ -68,7 +68,11 @@ def get_format_from_filename(filepath: str) -> str:
 
 
 def write_timeseries(
-    ts: TimeSeries, filepath: str, dataset_name: str | None = None
+    ts: TimeSeries,
+    filepath: str,
+    dataset_name: str | None = None,
+    file_permission: str | None = None,
+    overwrite: bool = True,
 ) -> None:
     """Write a TimeSeries to file, auto-detecting format from extension.
 
@@ -80,10 +84,19 @@ def write_timeseries(
         Path to output file.
     dataset_name:
         Name of the dataset in the file (default: 'data').
+    file_permission:
+        h5py open mode to use ('w', 'a', 'r+'). If given, it is preferred
+        over detection; otherwise an existing file is opened in append mode
+        ('a') and a missing file in write mode ('w').
+    overwrite:
+        If True (default), replace any existing dataset with the same name.
+        If False, raise an error when the dataset already exists.
     """
     fmt = get_format_from_filename(filepath)
     if fmt == "hdf5":
-        write_timeseries_hdf5(ts, filepath, dataset_name)
+        write_timeseries_hdf5(
+            ts, filepath, dataset_name, file_permission=file_permission, overwrite=overwrite
+        )
     else:
         raise ValueError(f"Unknown format: {fmt}")
 
@@ -111,7 +124,12 @@ def load_timeseries(filepath: str, dataset: str | None = None) -> TimeSeries:
 
 
 def write_frequencyseries(
-    series: FrequencySeries, filepath: str, dataset_name: str | None = None, **attrs
+    series: FrequencySeries,
+    filepath: str,
+    dataset_name: str | None = None,
+    file_permission: str | None = None,
+    overwrite: bool = True,
+    **attrs,
 ) -> None:
     """Write a FrequencySeries to file, auto-detecting format from extension.
 
@@ -123,12 +141,21 @@ def write_frequencyseries(
         Path to output file.
     dataset_name:
         Name of the dataset in the file (default: 'psd').
+    file_permission:
+        h5py open mode to use ('w', 'a', 'r+'). If given, it is preferred
+        over detection; otherwise an existing file is opened in append mode
+        ('a') and a missing file in write mode ('w').
+    overwrite:
+        If True (default), replace any existing dataset with the same name.
+        If False, raise an error when the dataset already exists.
     **attrs:
         Additional attributes to store in the file.
     """
     fmt = get_format_from_filename(filepath)
     if fmt == "hdf5":
-        write_frequencyseries_hdf5(series, filepath, dataset_name, **attrs)
+        write_frequencyseries_hdf5(
+            series, filepath, dataset_name, file_permission=file_permission, overwrite=overwrite, **attrs
+        )
     else:
         raise ValueError(f"Unknown format: {fmt}")
 
