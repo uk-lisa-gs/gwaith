@@ -83,7 +83,6 @@ def main(argv: list[str] | None = None) -> int:
     add_data_output_args(
         parser,
         output_required=False,
-        default_dataset="psd",
         output_help="Output HDF5 file for PSD",
     )
     parser.add_argument(
@@ -121,9 +120,9 @@ def main(argv: list[str] | None = None) -> int:
         )
         freq_series = FrequencySeries(
             data=psd,
-            frequencies=freqs,
+            f0=float(freqs[0]),
+            delta_f=float(freqs[1] - freqs[0]) if len(freqs) > 1 else fs / 2.0,
             epoch=data_ts.epoch,
-            delta_t=data_ts.delta_t,
         )
 
         if args.output:

@@ -308,7 +308,7 @@ def main(argv: list[str] | None = None) -> int:
             "+ parameters."
         ),
     )
-    add_data_input_args(parser, data_help="Input HDF5 data file", dataset_option="--data-dataset")
+    add_data_input_args(parser, data_help="Input HDF5 data file")
     parser.add_argument(
         "--priors",
         required=False,
@@ -322,8 +322,6 @@ def main(argv: list[str] | None = None) -> int:
     add_data_output_args(
         parser,
         output_option="--output-signal",
-        dataset_option="--output-signal-dataset",
-        default_dataset="signal",
         output_help="Output HDF5 signal file",
     )
     parser.add_argument(
@@ -368,7 +366,7 @@ def main(argv: list[str] | None = None) -> int:
         write_timeseries(
             signal_ts,
             args.output_signal,
-            args.output_signal_dataset,
+            args.output_dataset,
         )
 
         if args.output_components_dir:
@@ -383,7 +381,7 @@ def main(argv: list[str] | None = None) -> int:
                 write_timeseries(
                     component_ts,
                     str(component_path),
-                    args.output_signal_dataset,
+                    args.output_dataset,
                 )
 
         # Write parameters to YAML file

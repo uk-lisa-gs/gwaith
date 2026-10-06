@@ -3,7 +3,7 @@ sine_gaussian:
   options:
     prior-file: file:../priors/sine_gaussian_priors.yaml
     data-dataset: ${workflow|channels}
-    output-signal-dataset: ${workflow|channels}
+    output-dataset: ${workflow|channels}
     verbose:
   resources:
     walltime: "00:20:00"

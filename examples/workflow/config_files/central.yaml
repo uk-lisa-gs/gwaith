@@ -1,7 +1,7 @@
 processor:
   options:
     input-file: file:../example_data/example_data.hdf
-    input-dataset: data/A
+    input-dataset: ${workflow|channels}
     output-dataset: ${workflow|channels}
 
 subtraction:

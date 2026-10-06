@@ -6,7 +6,7 @@ sine_high_band:
     f-low: ${sine_low_band|options|f-high}
     f-high: 6.0e-2
     data-dataset: ${workflow|channels}
-    output-signal-dataset: ${workflow|channels}
+    output-dataset: ${workflow|channels}
     verbose:
   resources:
     walltime: "00:20:00"

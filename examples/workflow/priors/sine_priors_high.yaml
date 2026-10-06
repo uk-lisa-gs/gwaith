@@ -4,7 +4,7 @@ amplitude:
 max_components: 5
 min_frequency_separation: 2.0e-5
 frequency:
-  min: 1.0e-2
+  min: 9.0e-3
   max: 6.0e-2
 phase:
   min: -3.141592653589793

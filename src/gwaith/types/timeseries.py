@@ -82,11 +82,17 @@ class TimeSeries(Series):
         return TimeSeries(self.data, self.epoch, self.delta_t)
 
     def to_frequencyseries(self) -> FrequencySeries:
-        """Computes the Fourier transform of the timeseries."""
+        """Computes the Fourier transform of the timeseries.
+
+        The result is scaled by the sample spacing ``delta_t`` so that it
+        approximates the continuous (integral) Fourier transform, i.e.
+        ``h(f) = delta_t * rfft(h)``. This keeps frequency-domain amplitudes
+        (and any SNR derived from them) on the correct physical scale.
+        """
         from .frequencyseries import FrequencySeries
 
         n = len(self.data)
-        freq_data = fft.rfft(self.data)
+        freq_data = self.delta_t * fft.rfft(self.data)
         f0 = 0.0
         delta_f = 1.0 / (n * self.delta_t)
         return FrequencySeries(freq_data, delta_f=delta_f, f0=f0, epoch=self.epoch)

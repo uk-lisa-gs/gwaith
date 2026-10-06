@@ -58,6 +58,8 @@ def add_data_input_args(
     data_option: str = "--data",
     data_required: bool = True,
     data_help: str = "Input HDF5 data file",
+    dataset_option: str | None = "--data-dataset",
+    dataset_default: str | None = None,
 ) -> argparse._ArgumentGroup:
     """Add standard data-input file CLI arguments.
 
@@ -71,6 +73,13 @@ def add_data_input_args(
         Whether the data file argument is required (default: True).
     data_help : str
         Help text for the data file argument.
+    dataset_option : str or None
+        The name of the HDF5 dataset option to read from the input file.
+        Defaults to "--data-dataset". Set to None to disable it, in which
+        case ``args.data_dataset`` is always None and loaders fall back to
+        their default dataset name.
+    dataset_default : str or None
+        Default value for the dataset option (default: None).
     """
     grp = parser.add_argument_group("data input")
     grp.add_argument(
@@ -78,6 +87,15 @@ def add_data_input_args(
         required=data_required,
         help=data_help,
     )
+    if dataset_option is not None:
+        grp.add_argument(
+            dataset_option,
+            default=dataset_default,
+            help="Name of the HDF5 dataset to read from the input file",
+        )
+    else:
+        # Ensure the attribute exists even when no option is registered.
+        parser.set_defaults(data_dataset=None)
     return grp
 
 
@@ -87,6 +105,8 @@ def add_data_output_args(
     output_option: str = "--output",
     output_required: bool = True,
     output_help: str = "Output HDF5 file",
+    dataset_option: str | None = "--output-dataset",
+    dataset_default: str | None = None,
 ) -> argparse._ArgumentGroup:
     """Add standard data-output file CLI arguments.
 
@@ -102,10 +122,13 @@ def add_data_output_args(
         specified.
     output_help : str
         Help text for the output file argument.
-    output_group_default : str | None
-        The default value for the output-group option. If None, no group
-        argument is added. This is needed when tools expect
-        ``args.output_group``.
+    dataset_option : str or None
+        The name of the HDF5 dataset option to write into the output file.
+        Defaults to "--output-dataset". Set to None to disable it, in which
+        case ``args.output_dataset`` is always None and writers fall back to
+        their default dataset name.
+    dataset_default : str or None
+        Default value for the dataset option (default: None).
     """
     grp = parser.add_argument_group("data output")
     grp.add_argument(
@@ -113,6 +136,14 @@ def add_data_output_args(
         required=output_required,
         help=output_help,
     )
+    if dataset_option is not None:
+        grp.add_argument(
+            dataset_option,
+            default=dataset_default,
+            help="Name of the HDF5 dataset to write in the output file",
+        )
+    else:
+        parser.set_defaults(output_dataset=None)
     return grp
 
 

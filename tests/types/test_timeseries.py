@@ -96,6 +96,65 @@ def test_timeseries_to_frequencyseries():
     assert fs.epoch == ts.epoch
 
 
+def test_timeseries_to_frequencyseries_scales_by_delta_t():
+    # The forward transform is the integral (continuous) FT, i.e. scaled by
+    # delta_t relative to the raw DFT sum. This keeps SNR on the correct
+    # physical scale.
+    data = np.array([0.0, 1.0, 0.0, -1.0, 0.0])
+    delta_t = 0.25
+    ts = TimeSeries(data, 0.0, delta_t)
+    fs = ts.to_frequencyseries()
+
+    # |H(f)| at the dominant bin must equal delta_t * |rfft| (the raw DFT).
+    assert np.allclose(fs.data, delta_t * np.fft.rfft(data))
+
+
+def test_timeseries_to_frequencyseries_snr_normalisation():
+    # For a white-noise timeseries, the per-bin spectral power recovered by
+    # to_frequencyseries must be sigma^2 * n * delta_t^2 (i.e. the DFT bin
+    # variance sigma^2 * n scaled by the dt factor squared). Equivalently,
+    # sum |H|^2 = sigma^2 * n^2 * delta_t^2 / 2, so dividing by that must give
+    # a value that does NOT depend on either delta_t or n.
+    rng = np.random.default_rng(42)
+
+    def mean_power_ratio(delta_t: float, n: int) -> float:
+        sigma = 1.0  # per-sample time-domain std dev, independent of delta_t
+        total = 0.0
+        for _ in range(30):
+            h_i = rng.normal(0.0, sigma, size=n)
+            fs_i = TimeSeries(h_i, 0.0, delta_t).to_frequencyseries()
+            total += np.sum(np.abs(fs_i.data) ** 2) / (sigma**2 * n**2 * delta_t**2 / 2)
+        return total / 30
+
+    # The mean recovered power must be the same regardless of delta_t or n.
+    # (The tolerance is generous because the estimate is an average over a
+    # finite number of random draws.)
+    for delta_t in (1.0, 0.5, 0.25):
+        assert mean_power_ratio(delta_t, 4096) == pytest.approx(
+            mean_power_ratio(1.0, 4096), rel=0.05
+        )
+    # Also check that changing n (at fixed delta_t) does not change the ratio.
+    assert mean_power_ratio(0.5, 2048) == pytest.approx(
+        mean_power_ratio(0.5, 8192), rel=0.05
+    )
+
+
+def test_timeseries_to_frequencyseries_roundtrip_preserves_amplitude():
+    # A pure sine of amplitude A must come back with the same amplitude after
+    # ts -> fs -> ts, regardless of delta_t. This guards the forward (dt) and
+    # inverse (n*df) scalings against drifting out of sync.
+    delta_t = 0.37
+    n = 1024
+    freq_bin = 5
+    t = np.arange(n) * delta_t
+    amp = 3.0
+    data = amp * np.sin(2 * np.pi * freq_bin * t / (n * delta_t))
+    ts = TimeSeries(data, 0.0, delta_t)
+
+    ts_back = ts.to_frequencyseries().to_timeseries()
+    assert np.allclose(ts_back.data, data, atol=1e-9)
+
+
 def test_timeseries_psd():
     # Create a simple time series with a known frequency component
     delta_t = 0.01

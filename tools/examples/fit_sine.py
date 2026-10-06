@@ -200,8 +200,6 @@ def main(argv: list[str] | None = None) -> int:
     add_data_output_args(
         parser,
         output_option="--output-signal",
-        dataset_option="--output-signal-dataset",
-        default_dataset="signal",
         output_help="Output HDF5 signal file",
     )
     parser.add_argument(
@@ -235,7 +233,7 @@ def main(argv: list[str] | None = None) -> int:
         write_timeseries(
             signal_ts,
             args.output_signal,
-            args.output_signal_dataset,
+            args.output_dataset,
         )
 
         out = {
