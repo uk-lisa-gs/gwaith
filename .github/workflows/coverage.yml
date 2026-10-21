@@ -30,6 +30,9 @@ jobs:
       - name: Print coverage report
         run: python -m coverage report -m
 
+      - name: Generate XML coverage report
+        run: python -m coverage xml -o coverage.xml
+
       - name: Generate HTML report
         run: python -m coverage html -d htmlcov
 
@@ -38,3 +41,11 @@ jobs:
         with:
           name: htmlcov
           path: htmlcov
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage.xml
+          disable_search: true
+          fail_ci_if_error: true
