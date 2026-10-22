@@ -76,16 +76,16 @@ def _normalise_stream_outputs(
     """Return normalised output artifact definitions for a stream.
 
     The default output is the standard signal artifact written via
-    --output-signal/--output-signal-dataset.
+    --output-signal/--output-dataset.
     Additional outputs may be provided under stream output_files/output-files.
     """
     outputs: list[dict[str, Any]] = [
         {
             "id": "signal",
             "arg": "output-signal",
-            "dataset_arg": "output-signal-dataset",
+            "dataset_arg": "output-dataset",
             "dataset": str(
-                options.get("output-signal-dataset", _DEFAULT_SIGNAL_DATASET)
+                options.get("output-dataset", _DEFAULT_SIGNAL_DATASET)
             ),
             "kind": "signal",
             "extension": "hdf",
@@ -165,7 +165,7 @@ def _data_file_args(input_file: GwaithFile) -> list[str]:
     """Return the CLI args to point a tool at the input file's data.
 
     The flag names depend on the file type: HDF5 files are addressed with
-    ``--data-file``/``--data-group``, while JSON timeseries files (produced by
+    ``--data```, while JSON timeseries files (produced by
     the subtraction step) are addressed with ``--timeseries-file``/
     ``--timeseries-name``. Tools that accept both sets of options resolve to a
     single input via ``_resolve_input_file``, so emitting only the relevant
@@ -175,10 +175,8 @@ def _data_file_args(input_file: GwaithFile) -> list[str]:
         return []
     if _is_hdf5_file(input_file):
         return [
-            "--data-file",
+            "--data",
             input_file.local_path,
-            "--data-group",
-            input_file.dataset or _DEFAULT_DATASET,
         ]
     return ["--timeseries-file", input_file.local_path]
 
@@ -261,9 +259,9 @@ def _parse_config(
 
     input_file = (
         processor_options.get("input-file")
-        or processor_options.get("data-file")
+        or processor_options.get("data")
         or workflow_cfg.get("input-file")
-        or workflow_cfg.get("data-file")
+        or workflow_cfg.get("data")
     )
     input_dataset = str(processor_options.get("input-dataset") or _DEFAULT_DATASET)
 
@@ -341,6 +339,10 @@ def _parse_config(
             "executable": str(executables.get("noise", "gwaith_estimate_psd")),
             "options": dict(noise_cfg.get("options", {}) or {}),
             "resources": dict(noise_cfg.get("resources", {}) or {}),
+            "output_dataset": str(
+                noise_cfg.get("options", {}).get("output-dataset")
+                or _DEFAULT_PSD_DATASET
+            ),
         },
     }
 
@@ -494,7 +496,7 @@ def build_workflow_graph(
                         "prior-file",
                         "priors",
                         "init-params",
-                        "output-signal-dataset",
+                        "output-dataset",
                     },
                 )
             )
@@ -600,7 +602,7 @@ def build_workflow_graph(
             final_path=residual_path,
             produced_by=residual_node_uid,
             retention_level=cfg["global_retention_level"],
-            dataset=_DEFAULT_DATASET,
+            dataset=cfg["input_dataset"],
             kind="combined_residual",
             round_index=round_index,
             stream_uid="central",
@@ -638,7 +640,7 @@ def build_workflow_graph(
                 final_path=noise_path,
                 produced_by=noise_node_uid,
                 retention_level=cfg["global_retention_level"],
-                dataset=_DEFAULT_PSD_DATASET,
+                dataset=cfg["noise"]["output_dataset"],
                 kind="psd",
                 round_index=round_index,
                 stream_uid="noise",
@@ -710,7 +712,7 @@ def build_workflow_graph(
                     final_path=next_data_path,
                     produced_by=prep_node_uid,
                     retention_level=cfg["global_retention_level"],
-                    dataset=_DEFAULT_DATASET,
+                    dataset=cfg["input_dataset"],
                     kind="input_data",
                     round_index=round_index + 1,
                     stream_uid=stream_uid,

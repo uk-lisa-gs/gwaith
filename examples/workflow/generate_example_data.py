@@ -406,6 +406,7 @@ def main(argv: list[str] | None = None) -> int:
         "noise_psd": noise_config,
         "sine_waves": sine_wave_config,
         "offset": offset,
+        "sine_gaussians": sine_gaussian_config,
     }
     with truth_file.open("w", encoding="utf-8") as f:
         yaml.safe_dump(truth, f, sort_keys=False)

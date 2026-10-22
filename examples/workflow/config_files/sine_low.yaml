@@ -8,4 +8,4 @@ sine_low_band:
     f-high: 1e-2
     verbose:
     data-dataset: ${workflow|channels}
-    output-signal-dataset: ${workflow|channels}
+    output-dataset: ${workflow|channels}

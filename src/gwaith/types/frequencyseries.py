@@ -78,7 +78,13 @@ class FrequencySeries(Series):
             raise ValueError(f"delta_f mismatch: {self.delta_f} != {other.delta_f}")
 
     def to_timeseries(self, delta_t: float = None) -> TimeSeries:
-        """Computes the inverse Fourier transform of the frequencyseries."""
+        """Computes the inverse Fourier transform of the frequencyseries.
+
+        The result is scaled by ``n * delta_f`` so that it exactly inverts the
+        forward transform performed by :meth:`TimeSeries.to_frequencyseries`
+        (which multiplies by ``delta_t``). Since ``n * delta_f = 1/delta_t``,
+        the round-trip ``ts -> fs -> ts`` recovers the original samples.
+        """
         from .timeseries import TimeSeries
 
         n = (len(self.data) - 1) * 2
@@ -89,7 +95,7 @@ class FrequencySeries(Series):
                 raise ValueError("Cannot determine delta_t from delta_f=0")
             delta_t = 1 / (n * self.delta_f)
 
-        ts_data = fft.irfft(self.data, n=n)
+        ts_data = n * self.delta_f * fft.irfft(self.data, n=n)
         epoch = getattr(self, "epoch", 0)
         return TimeSeries(ts_data, epoch, delta_t)
 
