@@ -57,6 +57,9 @@ class Series:
         return NotImplemented
 
     def __getitem__(self, key: int | slice) -> Any:
+        """Preserve the series type for slices and return samples for indices."""
+        if isinstance(key, slice):
+            return self._new_from_data(self.data[key])
         return self.data[key]
 
     def __setitem__(self, key: int | slice, value: Any) -> None:

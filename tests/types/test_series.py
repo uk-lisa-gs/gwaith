@@ -41,6 +41,19 @@ class TestSeries:
         assert isinstance(result, type(s))
         assert np.array_equal(result.data, np.array([2.0, 3.0]))
 
+    @pytest.mark.parametrize("key", [slice(-3, -1), slice(None, None, 2), slice(2, 2)])
+    def test_slice_boundaries(self, key):
+        data = np.arange(6.0)
+        series = self.make_series(data)
+        result = series[key]
+        assert type(result) is type(series)
+        np.testing.assert_array_equal(result.data, data[key])
+
+    def test_negative_integer_returns_scalar(self):
+        series = self.make_series(np.arange(4.0))
+        assert np.isscalar(series[-1])
+        assert series[-1] == 3.0
+
     def test_setitem_int(self):
         data = np.array([1.0, 2.0, 3.0, 4.0])
         s = self.make_series(data)

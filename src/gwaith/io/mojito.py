@@ -8,9 +8,6 @@ import logging
 from contextlib import contextmanager
 from pathlib import Path
 
-from mojito import writer
-from mojito.sampling import UniformTimeSampling
-
 
 @contextmanager
 def silence_logger(name, level=logging.ERROR):
@@ -64,6 +61,10 @@ def write_mojito_tdis(ts_map, filepath):
     filepath:
         Output HDF5 file path.
     """
+    # Load the optional backend only when writing Mojito data.
+    from mojito import writer
+    from mojito.sampling import UniformTimeSampling
+
     if not isinstance(ts_map, dict):
         raise TypeError("TDI output requires a mapping of channel TimeSeries objects")
     if not ts_map:
@@ -112,6 +113,8 @@ def write_mojito_orbits(orbits_obj, filepath):
     filepath:
         Output HDF5 file path.
     """
+    from mojito import writer
+
     if orbits_obj is None:
         raise ValueError("No orbits object provided for output")
     if not hasattr(orbits_obj, "time_sampling"):

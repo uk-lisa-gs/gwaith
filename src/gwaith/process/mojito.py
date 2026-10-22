@@ -3,8 +3,6 @@
 import logging
 
 import numpy as np
-from mojito import MojitoL1File
-from MojitoProcessor import process_pipeline
 
 from gwaith.types import TimeSeries
 
@@ -117,6 +115,9 @@ def process_mojito(input_path, processor_options):
     Returns:
         dict: Mapping containing 'tdis' and 'orbits' output payloads.
     """
+    # Ordinary ingestion imports do not require the optional Mojito backend.
+    from mojito import MojitoL1File
+
     separated_opts = separate_processor_options(processor_options)
     chunk_opts = separated_opts.pop("chunk_kwargs")
 
@@ -197,6 +198,10 @@ def _process_mojito_slice(input_path, processor_options, tstart, duration):
     Returns:
         dict: Mapping containing 'tdis' and 'orbits' output payloads.
     """
+    from mojito import MojitoL1File
+    from MojitoProcessor import process_pipeline
+
+    logger.debug("Loaded optional Mojito processing backend")
     logger.info(
         "Processing Mojito file %s",
         input_path,
